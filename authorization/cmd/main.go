@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"log/slog"
 	"mentorlink/internal/config"
-	postgres "mentorlink/pkg/db"
+	"mentorlink/internal/lib/logger/sl"
+	"mentorlink/internal/storage/cache"
+	"mentorlink/internal/storage/db"
 	"os"
 )
 
@@ -17,22 +17,22 @@ const (
 
 func main() {
 
-	cfg, err := config.New()
+	cfg := config.LoadConfig()
 
+	log := setupLogger(cfg.Env)
+
+	log.Info("starting auth-service", slog.String("env", cfg.Env))
+
+	redis := cache.New(cfg.RedisConfig)
+
+	storage, err := db.NewStorage(cfg.Config)
 	if err != nil {
-		log.Fatal("Config error")
-	}
-
-	logger := setupLogger(cfg.Env)
-
-	storage, err = postgres.NewStorage(cfg.Config)
-	if err != nil {
-		fmt.Println(err)
+		log.Error("error creation storage", sl.Err(err))
 		os.Exit(1)
 	}
-	_ = storage
-	_ = logger
 
+	_ = storage
+	_ = redis
 }
 
 func setupLogger(env string) *slog.Logger {

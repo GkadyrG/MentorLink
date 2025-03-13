@@ -3,10 +3,11 @@ package main
 import (
 	"log/slog"
 	"mentorlink/internal/config"
-	"mentorlink/internal/handlers/registration"
+	"mentorlink/internal/handlers"
 	"mentorlink/internal/lib/logger/sl"
 	"mentorlink/internal/storage/cache"
 	"mentorlink/internal/storage/db"
+	"mentorlink/internal/token"
 	"net/http"
 	"os"
 
@@ -35,8 +36,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	tokemMn, err := token.NewTokenmanagerRSA(cfg.PrivateKeyPath, cfg.PublicKeyPath)
+	if err != nil {
+		log.Error("error with token manager", sl.Err(err))
+		os.Exit(1)
+	}
+
 	router := chi.NewRouter()
-	router.Post("/authorization/register", registration.Register(log, storage))
+	router.Post("/authorization/register", handlers.Register(log, storage))
+	router.Post("/authorization/login", handlers.Login(log, storage, tokemMn))
 	_ = redis
 
 	err = http.ListenAndServe("localhost:8081", router)

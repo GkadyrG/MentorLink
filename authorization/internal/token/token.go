@@ -1,8 +1,9 @@
-package auth
+package token
 
 import (
 	"crypto/rsa"
 	"errors"
+	"fmt"
 	"os"
 	"time"
 
@@ -21,11 +22,11 @@ type TokenManager struct {
 	publicKey  *rsa.PublicKey
 }
 
-func NewTokenmanagerRSA(privatekeyPath, publicKeyPath string) (*TokenManager, error) {
+func NewTokenmanagerRSA(privateKeyPath, publicKeyPath string) (*TokenManager, error) {
 	// Читаем приватный ключ
-	privData, err := os.ReadFile(privatekeyPath)
+	privData, err := os.ReadFile(privateKeyPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read private key from %s: %v", privateKeyPath, err)
 	}
 	// Парсим
 	privKey, err := jwt.ParseRSAPrivateKeyFromPEM(privData)
@@ -36,7 +37,7 @@ func NewTokenmanagerRSA(privatekeyPath, publicKeyPath string) (*TokenManager, er
 	// Читаем публичный ключ
 	pubData, err := os.ReadFile(publicKeyPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read private key from %s: %v", publicKeyPath, err)
 	}
 
 	// Парсим

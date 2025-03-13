@@ -23,7 +23,7 @@ type Config struct {
 
 func LoadConfig() *Config {
 	cfg := &Config{}
-	err := cleanenv.ReadConfig("../.env", cfg)
+	err := cleanenv.ReadConfig("./.env", cfg)
 	if err != nil {
 		log.Fatal("error reading config: %s", err.Error())
 	}

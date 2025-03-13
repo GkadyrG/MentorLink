@@ -1,4 +1,4 @@
-package registration
+package handlers
 
 import (
 	"errors"
@@ -22,51 +22,55 @@ type UserCreater interface {
 
 func Register(log *slog.Logger, userCreater UserCreater) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handlers.creater.createrUser.New"
+		const op = "handlers.register.Register"
 		log := log.With(
 			slog.String("op", op),
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
 		var req requests.Register
-
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
 			log.Error("failed to decode request body", sl.Err(err))
-			render.JSON(w, r, response.Error("failed to decode request"))
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, response.Error("invalid request body"))
 			return
 		}
 
 		if req.Password != req.RepeatPassword {
-			log.Error("passwords do not match")
+			log.Warn("passwords mismatch", slog.String("email", req.Email))
+			render.Status(r, http.StatusBadGateway)
 			render.JSON(w, r, response.Error("passwords do not match"))
 			return
 		}
 
-		if req.Role != model.RoleAdmin && req.Role != model.RoleMentor && req.Role != model.RoleUser {
-			log.Error("worng with role", slog.String("role", req.Role))
-			render.JSON(w, r, response.Error("wrnog with role"))
+		if !isValideRole(req.Role) {
+			log.Warn("invalid role provided", slog.String("role", req.Role))
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, response.Error("invalid role"))
 			return
 		}
 
 		existing, err := userCreater.GetByEmail(req.Email)
-		if err != nil && !(errors.Is(err, db.ErrUserNotFound)) {
-			log.Error("error with GetByEmail")
-			render.JSON(w, r, response.Error("wtf"))
+		if err != nil && !errors.Is(err, db.ErrUserNotFound) {
+			log.Error("failed to check user existence", sl.Err(err))
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, response.Error("internal error"))
 			return
 		}
 
 		if existing != nil {
-			log.Error("user already exists")
+			log.Error("user already exists", slog.String("email", req.Email))
+			render.Status(r, http.StatusConflict)
 			render.JSON(w, r, response.Error("user already exists"))
 			return
 		}
 
 		hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-
 		if err != nil {
-			render.JSON(w, r, "error with hash")
-			log.Debug("Что-то с хешированием пароля")
+			log.Error("failed to hash password", sl.Err(err))
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, "failed to process password")
 			return
 		}
 
@@ -77,12 +81,27 @@ func Register(log *slog.Logger, userCreater UserCreater) http.HandlerFunc {
 		}
 
 		if err = userCreater.CreateUser(user); err != nil {
-			log.Error("Error with storage")
-			render.JSON(w, r, response.Error("error with storage"))
+			log.Error("failed to create user", sl.Err(err))
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, response.Error("failed to create user"))
 			return
 		}
 
-		render.JSON(w, r, user.ID)
+		render.Status(r, http.StatusCreated)
+		render.JSON(w, r, map[string]any{
+			"id":    user.ID,
+			"email": user.Email,
+			"role":  user.Role,
+		})
 
+	}
+}
+
+func isValideRole(role string) bool {
+	switch role {
+	case model.RoleAdmin, model.RoleMentor, model.RoleUser:
+		return true
+	default:
+		return false
 	}
 }

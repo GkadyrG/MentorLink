@@ -61,11 +61,9 @@ func (s *Storage) GetByEmail(email string) (*model.User, error) {
 		&user.Role,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		fmt.Println("Что то тут не так в storage/db/postgres.go 1)")
 		return nil, ErrUserNotFound
 	}
 	if err != nil {
-		fmt.Println("Что то тут не так в storage/db/postgres.go 2)")
 		return nil, fmt.Errorf("%s, %w", op, err)
 	}
 	return user, nil

@@ -28,7 +28,9 @@ func main() {
 
 	log.Info("starting auth-service", slog.String("env", cfg.Env))
 
-	redis := cache.New(cfg.RedisConfig)
+	redisClient := cache.New(cfg.RedisConfig)
+
+	redisRepository := cache.NewRedisRepository(redisClient)
 
 	storage, err := db.NewStorage(cfg.Config)
 	if err != nil {
@@ -43,9 +45,9 @@ func main() {
 	}
 
 	router := chi.NewRouter()
-	router.Post("/authorization/register", handlers.Register(log, storage))
-	router.Post("/authorization/login", handlers.Login(log, storage, tokemMn))
-	_ = redis
+	router.Post("/auth/register", handlers.Register(log, storage))
+	router.Post("/auth/login", handlers.Login(log, storage, tokemMn))
+	router.Post("/auth/logout", handlers.Logout(log, redisRepository, tokemMn))
 
 	err = http.ListenAndServe("localhost:8081", router)
 	log.Error(err.Error())

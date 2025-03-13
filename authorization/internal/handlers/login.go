@@ -82,7 +82,7 @@ func Login(log *slog.Logger, auth Auth, tokenMn *token.TokenManager) http.Handle
 		refresh, err := tokenMn.GenerateToken(
 			user.ID,
 			user.Role,
-			time.Duration(AccessTokenTTL)*time.Second,
+			time.Duration(RefreshTokenTTL)*time.Second,
 			"refresh",
 		)
 		if err != nil {

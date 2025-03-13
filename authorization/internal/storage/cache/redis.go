@@ -32,7 +32,7 @@ func NewRedisRepository(redisClient *redis.Client) *RedisRepository {
 	return &RedisRepository{Client: redisClient}
 }
 
-func (r *RedisRepository) addToBlackList(token string, exp int64) error {
+func (r *RedisRepository) AddToBlackList(token string, exp int64) error {
 	const op = "storage.cache.addToBlackList"
 	ttl := exp - time.Now().Unix()
 	if ttl < 0 {
@@ -45,7 +45,7 @@ func (r *RedisRepository) addToBlackList(token string, exp int64) error {
 	return nil
 }
 
-func (r *RedisRepository) isBlackListed(token string) (bool, error) {
+func (r *RedisRepository) IsBlackListed(token string) (bool, error) {
 	const op = "storage.cache.isBlackListed"
 	_, err := r.Client.Get(token).Result()
 	if err == redis.Nil {

@@ -2,12 +2,15 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"mentorlink/internal/domain/model"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
+
+var ErrUserNotFound = errors.New("user not found")
 
 type Config struct {
 	UserName string `env:"POSTGRES_USER" env-required:"true"`
@@ -57,10 +60,12 @@ func (s *Storage) GetByEmail(email string) (*model.User, error) {
 		&user.Password,
 		&user.Role,
 	)
-	if err == sql.ErrNoRows {
-		return nil, nil
+	if errors.Is(err, sql.ErrNoRows) {
+		fmt.Println("Что то тут не так в storage/db/postgres.go 1)")
+		return nil, ErrUserNotFound
 	}
 	if err != nil {
+		fmt.Println("Что то тут не так в storage/db/postgres.go 2)")
 		return nil, fmt.Errorf("%s, %w", op, err)
 	}
 	return user, nil

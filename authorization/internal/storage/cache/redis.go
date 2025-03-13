@@ -33,9 +33,26 @@ func NewRedisRepository(redisClient *redis.Client) *RedisRepository {
 }
 
 func (r *RedisRepository) addToBlackList(token string, exp int64) error {
+	const op = "storage.cache.addToBlackList"
 	ttl := exp - time.Now().Unix()
 	if ttl < 0 {
 		ttl = 60
 	}
-	r.Client.Set(token, "", time.Duration(ttl)*time.Second)
+	err := r.Client.Set(token, "", time.Duration(ttl)*time.Second).Err()
+	if err != nil {
+		return fmt.Errorf("%s, %w", op, err)
+	}
+	return nil
+}
+
+func (r *RedisRepository) isBlackListed(token string) (bool, error) {
+	const op = "storage.cache.isBlackListed"
+	_, err := r.Client.Get(token).Result()
+	if err == redis.Nil {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+	return true, nil
 }

@@ -3,10 +3,14 @@ package main
 import (
 	"log/slog"
 	"mentorlink/internal/config"
+	"mentorlink/internal/handlers/registration"
 	"mentorlink/internal/lib/logger/sl"
 	"mentorlink/internal/storage/cache"
 	"mentorlink/internal/storage/db"
+	"net/http"
 	"os"
+
+	"github.com/go-chi/chi"
 )
 
 const (
@@ -31,8 +35,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	_ = storage
+	router := chi.NewRouter()
+	router.Post("/authorization/register", registration.Register(log, storage))
 	_ = redis
+
+	err = http.ListenAndServe("localhost:8081", router)
+	log.Error(err.Error())
 }
 
 func setupLogger(env string) *slog.Logger {

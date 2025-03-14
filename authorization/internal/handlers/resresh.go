@@ -7,19 +7,20 @@ import (
 	"mentorlink/internal/lib/logger/sl"
 	"mentorlink/internal/token"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 )
 
-type RedisRepo interface {
+type redisRepo interface {
 	AddToBlackList(token string, exp int64) error
 	IsBlackListed(token string) (bool, error)
 }
 
-func Logout(log *slog.Logger, redisRepo RedisRepo, tokenMn *token.TokenManager) http.HandlerFunc {
+func RefreshTokens(log *slog.Logger, redisRepo RedisRepo, tokenMn *token.TokenManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handlers.logout.Logout"
+		const op = "handlers.refresh.RefreshTokens"
 		log := log.With(
 			slog.String("op", op),
 			slog.String("request_id", middleware.GetReqID(r.Context())),
@@ -41,7 +42,7 @@ func Logout(log *slog.Logger, redisRepo RedisRepo, tokenMn *token.TokenManager) 
 			return
 		}
 		if isBlackListed {
-			log.Warn("token already blacklisted")
+			log.Error("token already blacklisted")
 			render.Status(r, http.StatusConflict)
 			render.JSON(w, r, response.Error("token revoked"))
 			return
@@ -62,16 +63,43 @@ func Logout(log *slog.Logger, redisRepo RedisRepo, tokenMn *token.TokenManager) 
 			return
 		}
 
-		if err := redisRepo.AddToBlackList(req.RefreshToken, claims.ExpiresAt.Unix()); err != nil {
-			log.Error("failed to blacklist token", sl.Err(err))
+		newAccess, err := tokenMn.GenerateToken(
+			claims.UserID,
+			claims.Role,
+			time.Duration(AccessTokenTTL)*time.Second,
+			"access",
+		)
+		if err != nil {
+			log.Error("failed to generate access token", sl.Err(err))
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error("server error"))
 			return
 		}
 
+		newRefresh, err := tokenMn.GenerateToken(
+			claims.UserID,
+			claims.Role,
+			time.Duration(RefreshTokenTTL)*time.Second,
+			"refresh",
+		)
+		if err != nil {
+			log.Error("failed to generate refresh token", sl.Err(err))
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, response.Error("server error"))
+			return
+		}
+
+		if err := redisRepo.AddToBlackList(req.RefreshToken, claims.ExpiresAt.Unix()); err != nil {
+			log.Error("falied to adding token to black list", sl.Err(err))
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, response.Error("server error"))
+		}
+
 		render.Status(r, http.StatusOK)
 		render.JSON(w, r, map[string]any{
-			"status": "logged_out",
+			"access_token":  newAccess,
+			"refresh_token": newRefresh,
 		})
+
 	}
 }

@@ -1,4 +1,4 @@
-package handlers
+package register
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"mentorlink/internal/domain/requests"
 	"mentorlink/internal/domain/response"
 	"mentorlink/internal/lib/logger/sl"
+	"mentorlink/internal/lib/validate"
 	"mentorlink/internal/storage/db"
 	"net/http"
 
@@ -37,17 +38,10 @@ func Register(log *slog.Logger, userCreater UserCreater) http.HandlerFunc {
 			return
 		}
 
-		if req.Password != req.RepeatPassword {
-			log.Warn("passwords mismatch", slog.String("email", req.Email))
-			render.Status(r, http.StatusBadGateway)
-			render.JSON(w, r, response.Error("passwords do not match"))
-			return
-		}
-
-		if !isValideRole(req.Role) {
-			log.Warn("invalid role provided", slog.String("role", req.Role))
-			render.Status(r, http.StatusBadRequest)
-			render.JSON(w, r, response.Error("invalid role"))
+		if err := validate.IsValid(req); err != nil {
+			log.Error("validation error", sl.Err(err))
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, response.Error("server error"))
 			return
 		}
 
@@ -94,14 +88,5 @@ func Register(log *slog.Logger, userCreater UserCreater) http.HandlerFunc {
 			"role":  user.Role,
 		})
 
-	}
-}
-
-func isValideRole(role string) bool {
-	switch role {
-	case model.RoleAdmin, model.RoleMentor, model.RoleUser:
-		return true
-	default:
-		return false
 	}
 }

@@ -1,10 +1,11 @@
-package handlers
+package refresh
 
 import (
 	"log/slog"
 	"mentorlink/internal/domain/requests"
 	"mentorlink/internal/domain/response"
 	"mentorlink/internal/lib/logger/sl"
+	"mentorlink/internal/lib/validate"
 	"mentorlink/internal/token"
 	"net/http"
 	"time"
@@ -13,7 +14,12 @@ import (
 	"github.com/go-chi/render"
 )
 
-type redisRepo interface {
+var (
+	AccessTokenTTL  int64 = 300
+	RefreshTokenTTL int64 = 1800
+)
+
+type RedisRepo interface {
 	AddToBlackList(token string, exp int64) error
 	IsBlackListed(token string) (bool, error)
 }
@@ -29,6 +35,13 @@ func RefreshTokens(log *slog.Logger, redisRepo RedisRepo, tokenMn *token.TokenMa
 		var req requests.RFToken
 		if err := render.DecodeJSON(r.Body, &req); err != nil {
 			log.Error("failed to decode request body", sl.Err(err))
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, response.Error("invalid request"))
+			return
+		}
+
+		if err := validate.IsValid(req); err != nil {
+			log.Warn("request is not valid", slog.String("valid", "false"))
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("invalid request"))
 			return
@@ -50,7 +63,7 @@ func RefreshTokens(log *slog.Logger, redisRepo RedisRepo, tokenMn *token.TokenMa
 
 		claims, err := tokenMn.ParseToken(req.RefreshToken)
 		if err != nil {
-			log.Error("failed to parse redresh token", sl.Err(err))
+			log.Error("failed to parse refresh token", sl.Err(err))
 			render.Status(r, http.StatusUnauthorized)
 			render.JSON(w, r, response.Error("invalid token"))
 			return

@@ -1,10 +1,11 @@
-package handlers
+package logout
 
 import (
 	"log/slog"
 	"mentorlink/internal/domain/requests"
 	"mentorlink/internal/domain/response"
 	"mentorlink/internal/lib/logger/sl"
+	"mentorlink/internal/lib/validate"
 	"mentorlink/internal/token"
 	"net/http"
 
@@ -28,6 +29,13 @@ func Logout(log *slog.Logger, redisRepo RedisRepo, tokenMn *token.TokenManager) 
 		var req requests.RFToken
 		if err := render.DecodeJSON(r.Body, &req); err != nil {
 			log.Error("failed to decode request body", sl.Err(err))
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, response.Error("invalid request"))
+			return
+		}
+
+		if err := validate.IsValid(req); err != nil {
+			log.Warn("request is not valid", slog.String("valid", "false"))
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("invalid request"))
 			return

@@ -4,6 +4,7 @@ import (
 	"log"
 	"mentorlink/internal/storage/cache"
 	postgres "mentorlink/internal/storage/db"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -12,6 +13,8 @@ type Config struct {
 	postgres.Config
 	cache.RedisConfig
 
+	Address string `env:"ADDRESS" env-required:"true"`
+
 	Env string `env:"ENV" env-required:"true"`
 
 	AccessTokenTTL  int64 `env:"ACCES_TOKEN_TTL" env-default:"900"`
@@ -19,13 +22,16 @@ type Config struct {
 
 	PrivateKeyPath string `env:"JWT_PRIVATE_KEY_PATH"`
 	PublicKeyPath  string `env:"JWT_PUBLIC_KEY_PATH"`
+
+	Timeout     time.Duration `env:"TIMEOUT" env-default:"4s"`
+	IdleTimeout time.Duration `env:"IDLE_TIMEOUT" env-default:"60s"`
 }
 
 func LoadConfig() *Config {
 	cfg := &Config{}
 	err := cleanenv.ReadConfig("./.env", cfg)
 	if err != nil {
-		log.Fatal("error reading config: %s", err.Error())
+		log.Fatalf("error reading config: %s", err.Error())
 	}
 	return cfg
 }

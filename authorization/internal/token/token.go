@@ -20,7 +20,7 @@ type Claims struct {
 	UserID    int64  `json:"user_id"`
 	Role      string `json:"role"`
 	TokenType string `token:"token_type"`
-	ExpiresAt int64  `json:"exp"`
+	jwt.RegisteredClaims
 }
 
 type TokenManager struct {
@@ -59,13 +59,13 @@ func NewTokenmanagerRSA(privateKeyPath, publicKeyPath string) (*TokenManager, er
 }
 
 func (tm *TokenManager) GenerateToken(userID int64, role string, ttl time.Duration, tokenType string) (string, error) {
-	now := time.Now().Unix()
-	exp := now + int64(ttl.Seconds())
 	claims := &Claims{
 		UserID:    userID,
 		Role:      role,
 		TokenType: tokenType,
-		ExpiresAt: exp,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(ttl)),
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)

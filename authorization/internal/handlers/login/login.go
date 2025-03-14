@@ -1,4 +1,4 @@
-package handlers
+package login
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"mentorlink/internal/domain/requests"
 	"mentorlink/internal/domain/response"
 	"mentorlink/internal/lib/logger/sl"
+	"mentorlink/internal/lib/validate"
 	"mentorlink/internal/storage/db"
 	"mentorlink/internal/token"
 	"net/http"
@@ -41,6 +42,13 @@ func Login(log *slog.Logger, auth Auth, tokenMn *token.TokenManager) http.Handle
 			log.Error("failed to decode request body", sl.Err(err))
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("invalid request body"))
+			return
+		}
+
+		if err := validate.IsValid(req); err != nil {
+			log.Warn("request is not valid", slog.String("valid", "false"))
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, response.Error("invalid request"))
 			return
 		}
 

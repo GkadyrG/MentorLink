@@ -1,9 +1,17 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"mentorlink/internal/config"
-	"mentorlink/internal/handlers"
+	"mentorlink/internal/handlers/login"
+	"mentorlink/internal/handlers/logout"
+	"mentorlink/internal/handlers/refresh"
+	"mentorlink/internal/handlers/register"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"mentorlink/internal/lib/logger/sl"
 	"mentorlink/internal/storage/cache"
 	"mentorlink/internal/storage/db"
@@ -12,6 +20,7 @@ import (
 	"os"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 )
 
 const (
@@ -26,7 +35,12 @@ func main() {
 
 	log := setupLogger(cfg.Env)
 
-	log.Info("starting auth-service", slog.String("env", cfg.Env))
+	log.Info(
+		"starting auth-service",
+		slog.String("env", cfg.Env),
+	)
+
+	log.Debug("debug messages are enabled")
 
 	redisClient := cache.New(cfg.RedisConfig)
 
@@ -45,13 +59,50 @@ func main() {
 	}
 
 	router := chi.NewRouter()
-	router.Post("/auth/register", handlers.Register(log, storage))
-	router.Post("/auth/login", handlers.Login(log, storage, tokemMn))
-	router.Post("/auth/logout", handlers.Logout(log, redisRepository, tokemMn))
-	router.Post("/auth/refresh", handlers.RefreshTokens(log, redisRepository, tokemMn))
 
-	err = http.ListenAndServe("localhost:8081", router)
-	log.Error(err.Error())
+	router.Use(middleware.RequestID)
+	router.Use(middleware.Logger)
+	router.Use(middleware.URLFormat)
+
+	router.Post("/auth/register", register.Register(log, storage))
+	router.Post("/auth/login", login.Login(log, storage, tokemMn))
+	router.Post("/auth/logout", logout.Logout(log, redisRepository, tokemMn))
+	router.Post("/auth/refresh", refresh.RefreshTokens(log, redisRepository, tokemMn))
+
+	log.Info("starting server", slog.String("adsress", cfg.Address))
+
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	srv := &http.Server{
+		Addr:         cfg.Address,
+		Handler:      router,
+		ReadTimeout:  cfg.Timeout,
+		WriteTimeout: cfg.Timeout,
+		IdleTimeout:  cfg.IdleTimeout,
+	}
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Error("failed to start server", sl.Err(err))
+		}
+	}()
+
+	log.Info("server started")
+
+	<-done
+	log.Info("stopping server")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Error("failed to stop server", sl.Err(err))
+
+		return
+	}
+
+	log.Info("server stopped")
+
 }
 
 func setupLogger(env string) *slog.Logger {

@@ -32,11 +32,10 @@ func NewRedisRepository(redisClient *redis.Client) *RedisRepository {
 	return &RedisRepository{Client: redisClient}
 }
 
-func (r *RedisRepository) AddToBlackList(token string, exp int64) error {
+func (r *RedisRepository) AddToBlackList(token string, exp time.Duration) error {
 	const op = "storage.cache.addToBlackList"
-	ttl := exp - time.Now().Unix()
-	if ttl < 0 {
-		ttl = 60
+	if time.Now() > exp {
+
 	}
 	err := r.Client.Set(token, "", time.Duration(ttl)*time.Second).Err()
 	if err != nil {

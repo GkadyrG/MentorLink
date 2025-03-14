@@ -10,6 +10,12 @@ import (
 	jwt "github.com/golang-jwt/jwt/v5"
 )
 
+var (
+	ErrInvalidSigningMethod = errors.New("invalid signing method")
+	ErrTokenExpired         = errors.New("token expired")
+	ErrMissingUserID        = errors.New("missing user_id")
+)
+
 type Claims struct {
 	UserID    int64  `json:"user_id"`
 	Role      string `json:"role"`
@@ -55,64 +61,31 @@ func NewTokenmanagerRSA(privateKeyPath, publicKeyPath string) (*TokenManager, er
 func (tm *TokenManager) GenerateToken(userID int64, role string, ttl time.Duration, tokenType string) (string, error) {
 	now := time.Now().Unix()
 	exp := now + int64(ttl.Seconds())
+	claims := &Claims{
+		UserID:    userID,
+		Role:      role,
+		TokenType: tokenType,
+		ExpiresAt: exp,
+	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"user_id":    userID,
-		"role":       role,
-		"token_type": tokenType,
-		"exp":        exp,
-	})
-
-	// Подписываем приватный ключ
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	return token.SignedString(tm.privateKey)
 }
 
 // Проверяем подпись публичным ключом
 func (tm *TokenManager) ParseToken(tokenStr string) (*Claims, error) {
-	parsed, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-		// Проверяем, что алгоритм действительно RS256
+	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, errors.New("unexpected signing method")
+			return nil, ErrInvalidSigningMethod
 		}
 		return tm.publicKey, nil
 	})
-	if err != nil {
-		return nil, err
-	}
 
-	if !parsed.Valid {
-		return nil, errors.New("Invalid token")
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		if claims.ExpiresAt.Before(time.Now()) {
+			return nil, ErrTokenExpired
+		}
+		return claims, nil
 	}
-
-	mapClaims, ok := parsed.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil, errors.New("invalid token claims")
-	}
-
-	c := &Claims{}
-
-	if uid, ok := mapClaims["user_id"].(float64); ok {
-		c.UserID = int64(uid)
-	} else {
-		return nil, errors.New("missing user_id")
-	}
-
-	if role, ok := mapClaims["role"].(string); ok {
-		c.Role = role
-	} else {
-		return nil, errors.New("missing role")
-	}
-
-	if tt, ok := mapClaims["token_type"].(string); ok {
-		c.TokenType = tt
-	} else {
-		return nil, errors.New("missing token_type")
-	}
-
-	if exp, ok := mapClaims["exp"].(float64); ok {
-		c.ExpiresAt = int64(exp)
-	} else {
-		return nil, errors.New("missing exp")
-	}
-	return c, nil
+	return nil, fmt.Errorf("parse token: %w", err)
 }

@@ -12,6 +12,6 @@ type Login struct {
 	Password string `json:"password"`
 }
 
-type Logout struct {
+type RFToken struct {
 	RefreshToken string `json:"refresh_token"`
 }

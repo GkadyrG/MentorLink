@@ -48,6 +48,7 @@ func main() {
 	router.Post("/auth/register", handlers.Register(log, storage))
 	router.Post("/auth/login", handlers.Login(log, storage, tokemMn))
 	router.Post("/auth/logout", handlers.Logout(log, redisRepository, tokemMn))
+	router.Post("/auth/refresh", handlers.RefreshTokens(log, redisRepository, tokemMn))
 
 	err = http.ListenAndServe("localhost:8081", router)
 	log.Error(err.Error())

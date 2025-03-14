@@ -15,7 +15,7 @@ import (
 	"mentorlink/internal/lib/logger/sl"
 	"mentorlink/internal/storage/cache"
 	"mentorlink/internal/storage/db"
-	"mentorlink/internal/token"
+	"mentorlink/pkg/token"
 	"net/http"
 	"os"
 

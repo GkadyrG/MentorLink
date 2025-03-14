@@ -9,7 +9,7 @@ import (
 	"mentorlink/internal/lib/logger/sl"
 	"mentorlink/internal/lib/validate"
 	"mentorlink/internal/storage/db"
-	"mentorlink/internal/token"
+	"mentorlink/pkg/token"
 	"net/http"
 	"time"
 

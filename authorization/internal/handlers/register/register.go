@@ -16,6 +16,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+//go:generate go run github.com/vektra/mockery/v2@latest --name=UserCreater
 type UserCreater interface {
 	CreateUser(u *model.User) error
 	GetByEmail(email string) (*model.User, error)
@@ -40,7 +41,7 @@ func Register(log *slog.Logger, userCreater UserCreater) http.HandlerFunc {
 
 		if err := validate.IsValid(req); err != nil {
 			log.Error("validation error", sl.Err(err))
-			render.Status(r, http.StatusInternalServerError)
+			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("server error"))
 			return
 		}

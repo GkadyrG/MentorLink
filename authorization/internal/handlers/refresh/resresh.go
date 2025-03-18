@@ -24,7 +24,12 @@ type RedisRepo interface {
 	IsBlackListed(token string) (bool, error)
 }
 
-func RefreshTokens(log *slog.Logger, redisRepo RedisRepo, tokenMn *token.TokenManager) http.HandlerFunc {
+type TokenMn interface {
+	GenerateToken(userID int64, role string, ttl time.Duration, tokenType string) (string, error)
+	ParseToken(tokenStr string) (*token.Claims, error)
+}
+
+func RefreshTokens(log *slog.Logger, redisRepo RedisRepo, tokenMn TokenMn) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.refresh.RefreshTokens"
 		log := log.With(

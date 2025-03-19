@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"mentorlink/internal/domain/model"
 	"mentorlink/internal/domain/response"
-	"mentorlink/internal/handlers/register/mocks"
+	"mentorlink/internal/handlers/mocks"
 	"mentorlink/internal/lib/logger/slogdiscard"
 	"mentorlink/internal/storage/db"
 	"net/http"

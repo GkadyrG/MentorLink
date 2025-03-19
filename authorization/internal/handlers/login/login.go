@@ -23,12 +23,19 @@ var (
 	RefreshTokenTTL int64 = 1800
 )
 
+//go:generate go run github.com/vektra/mockery/v2@latest --name=Auth
 type Auth interface {
 	CreateUser(u *model.User) error
 	GetByEmail(email string) (*model.User, error)
 }
 
-func Login(log *slog.Logger, auth Auth, tokenMn *token.TokenManager) http.HandlerFunc {
+//go:generate go run github.com/vektra/mockery/v2@latest --name=TokenMn
+type TokenMn interface {
+	GenerateToken(userID int64, role string, ttl time.Duration, tokenType string) (string, error)
+	ParseToken(tokenStr string) (*token.Claims, error)
+}
+
+func Login(log *slog.Logger, auth Auth, tokenMn TokenMn) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.login.Login"
 		log := log.With(
@@ -96,7 +103,7 @@ func Login(log *slog.Logger, auth Auth, tokenMn *token.TokenManager) http.Handle
 		if err != nil {
 			log.Error("failed to generate refresh token", sl.Err(err))
 			render.Status(r, http.StatusInternalServerError)
-			render.JSON(w, r, response.Error("failed to geenrate refresh token"))
+			render.JSON(w, r, response.Error("failed to genrate refresh token"))
 			return
 		}
 

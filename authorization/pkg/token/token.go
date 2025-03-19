@@ -19,7 +19,7 @@ var (
 type Claims struct {
 	UserID    int64  `json:"user_id"`
 	Role      string `json:"role"`
-	TokenType string `token:"token_type"`
+	TokenType string `json:"token_type"`
 	jwt.RegisteredClaims
 }
 

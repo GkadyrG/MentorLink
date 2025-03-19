@@ -8,17 +8,24 @@ import (
 	"mentorlink/internal/lib/validate"
 	"mentorlink/pkg/token"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 )
 
+//go:generate go run github.com/vektra/mockery/v2@latest --name=RedisRepo
 type RedisRepo interface {
 	AddToBlackList(token string, exp int64) error
 	IsBlackListed(token string) (bool, error)
 }
 
-func Logout(log *slog.Logger, redisRepo RedisRepo, tokenMn *token.TokenManager) http.HandlerFunc {
+type TokenMn interface {
+	GenerateToken(userID int64, role string, ttl time.Duration, tokenType string) (string, error)
+	ParseToken(tokenStr string) (*token.Claims, error)
+}
+
+func Logout(log *slog.Logger, redisRepo RedisRepo, tokenMn TokenMn) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.logout.Logout"
 		log := log.With(

@@ -84,7 +84,7 @@ func TestLoginHandler(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 
-			tokenMn := mocksToken.NewTokenMn(t)
+			tokenMn := mocks.NewTokenMn(t)
 			authMock := mocks.NewUserCreater(t)
 
 			authMock.On("GetByEmail", tc.email).Return(tc.mockUser, tc.mockError)

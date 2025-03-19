@@ -107,6 +107,16 @@ func Login(log *slog.Logger, auth Auth, tokenMn TokenMn) http.HandlerFunc {
 			return
 		}
 
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    refresh,
+			Path:     "/",
+			MaxAge:   int(RefreshTokenTTL),
+			HttpOnly: true,
+			Secure:   false,
+			SameSite: http.SameSiteDefaultMode,
+		})
+
 		render.Status(r, http.StatusOK)
 		render.JSON(w, r, map[string]any{
 			"access_token":  access,

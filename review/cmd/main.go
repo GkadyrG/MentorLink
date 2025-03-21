@@ -1,11 +1,23 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log/slog"
+	"net/http"
 	"os"
+	"os/signal"
 	"review/internal/config"
+	"review/internal/handlers/create"
+	del "review/internal/handlers/delete"
+	"review/internal/handlers/get"
+	"review/internal/handlers/update"
+	"review/internal/lib/logger/sl"
 	"review/internal/storage/db"
+	"syscall"
+	"time"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 )
 
 const (
@@ -27,10 +39,55 @@ func main() {
 
 	log.Debug("debug messages are enabled")
 
-	s, err := db.NewStorage(cfg.Config)
+	storage, err := db.NewStorage(cfg.Config)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Error("error created storage", sl.Err(err))
+		os.Exit(1)
 	}
+
+	router := chi.NewRouter()
+
+	router.Use(middleware.RequestID)
+	router.Use(middleware.URLFormat)
+
+	router.Post("/review/create", create.Create(log, storage))
+	router.Put("/review/update", update.Update(log, storage))
+	router.Get("/review/get", get.Get(log, storage))
+	router.Delete("/review/delete/{id}", del.Delete(log, storage))
+
+	log.Info("starting server", slog.String("adsress", cfg.Address))
+
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	srv := &http.Server{
+		Addr:         cfg.Address,
+		Handler:      router,
+		ReadTimeout:  cfg.Timeout,
+		WriteTimeout: cfg.Timeout,
+		IdleTimeout:  cfg.IdleTimeout,
+	}
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Error("failed to start server", sl.Err(err))
+		}
+	}()
+
+	log.Info("server started")
+
+	<-done
+	log.Info("stopping server")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Error("failed to stop server", sl.Err(err))
+
+		return
+	}
+
+	log.Info("server stopped")
 
 }
 

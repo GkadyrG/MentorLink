@@ -1,5 +1,5 @@
 package requests
 
-type EmailMenor struct {
-	Email string `json:"email" db:"email" validate:"required,email"`
+type EmailMentor struct {
+	Email string `json:"mentor_email" db:"email" validate:"required,email"`
 }

@@ -22,7 +22,7 @@ func Create(log *slog.Logger, reviewCreater ReviewCreater) http.HandlerFunc {
 		const op = "handlers.create.Create"
 		log := log.With(
 			slog.String("op", op),
-			slog.String("requiest_id", middleware.GetReqID(r.Context())),
+			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
 		var req model.Review
@@ -47,6 +47,7 @@ func Create(log *slog.Logger, reviewCreater ReviewCreater) http.HandlerFunc {
 			log.Error("falied to create review", sl.Err(err))
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error("server error"))
+			return
 		}
 
 		render.Status(r, http.StatusCreated)

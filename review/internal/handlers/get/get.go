@@ -25,7 +25,7 @@ func Get(log *slog.Logger, getReview GetReview) http.HandlerFunc {
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		var req requests.EmailMenor
+		var req requests.EmailMentor
 
 		if err := render.DecodeJSON(r.Body, &req); err != nil {
 			log.Error("failed to decode request body", sl.Err(err))

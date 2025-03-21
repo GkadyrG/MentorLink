@@ -40,7 +40,7 @@ func Update(log *slog.Logger, reviewUpdate ReviewUpdate) http.HandlerFunc {
 		}
 
 		if err := reviewUpdate.UpdateReview(&req); err != nil {
-			log.Error("falied to update review", sl.Err(err))
+			log.Error("failed to update review", sl.Err(err))
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error("server error"))
 			return

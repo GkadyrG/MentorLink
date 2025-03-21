@@ -12,7 +12,9 @@ import (
 	"review/internal/handlers/get"
 	"review/internal/handlers/update"
 	"review/internal/lib/logger/sl"
+	mwAuth "review/internal/middleware/auth"
 	"review/internal/storage/db"
+	"review/pkg/token"
 	"syscall"
 	"time"
 
@@ -45,10 +47,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	tokenMn, err := token.NewTokenManagerRSA(cfg.PublicKeyPath)
+	if err != nil {
+		log.Error("error created a new token manager", sl.Err(err))
+		os.Exit(1)
+	}
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
 	router.Use(middleware.URLFormat)
+	router.Use(mwAuth.AuthMiddleware(tokenMn, log))
 
 	router.Post("/review/create", create.Create(log, storage))
 	router.Put("/review/update", update.Update(log, storage))

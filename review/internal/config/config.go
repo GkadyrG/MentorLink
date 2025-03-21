@@ -10,10 +10,11 @@ import (
 
 type Config struct {
 	postgres.Config
-	Address     string        `env:"ADDRESS" env-required:"true"`
-	Timeout     time.Duration `env:"TIMEOUT" env-default:"4s"`
-	IdleTimeout time.Duration `env:"IDLE_TIMEOUT" env-default:"60s"`
-	Env         string        `env:"ENV" env-required:"true"`
+	Address       string        `env:"ADDRESS" env-required:"true"`
+	Timeout       time.Duration `env:"TIMEOUT" env-default:"4s"`
+	IdleTimeout   time.Duration `env:"IDLE_TIMEOUT" env-default:"60s"`
+	Env           string        `env:"ENV" env-required:"true"`
+	PublicKeyPath string        `env:"JWT_PUBLIC_KEY_PATH"`
 }
 
 func LoadConfig() *Config {

@@ -3,10 +3,10 @@ package model
 import "time"
 
 type Review struct {
-	ID          int64     `db:"id"`
-	MentorEmail string    `db:"mentor_email"`
-	Rating      float32   `db:"rating"`
-	Comment     string    `db:"comment"`
-	UserContact string    `db:"user_contact"`
+	ID          int64     `json:"id,omitempty" db:"id"`
+	MentorEmail string    `json:"mentor_email" db:"mentor_email" validate:"required,email"`
+	Rating      float32   `json:"rating" db:"rating"`
+	Comment     string    `json:"comment" db:"comment"`
+	UserContact string    `json:"user_contact" db:"user_contact"`
 	CreatedAt   time.Time `db:"created_at"`
 }

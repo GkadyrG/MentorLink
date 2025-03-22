@@ -75,7 +75,7 @@ func (tm *TokenManager) GenerateToken(userID int64, role string, ttl time.Durati
 // Проверяем подпись публичным ключом
 func (tm *TokenManager) ParseToken(tokenStr string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+		if t.Method != jwt.SigningMethodRS256 {
 			return nil, ErrInvalidSigningMethod
 		}
 		return tm.publicKey, nil

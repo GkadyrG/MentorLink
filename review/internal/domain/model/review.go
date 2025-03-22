@@ -4,6 +4,7 @@ import "time"
 
 type Review struct {
 	ID          int64     `json:"id,omitempty" db:"id"`
+	UserID      int64     `db:"user_id"`
 	MentorEmail string    `json:"mentor_email" db:"mentor_email" validate:"required,email"`
 	Rating      float32   `json:"rating" db:"rating"`
 	Comment     string    `json:"comment" db:"comment"`

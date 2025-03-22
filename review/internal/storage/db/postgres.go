@@ -34,11 +34,11 @@ func NewStorage(cfg Config) (*Storage, error) {
 
 func (s *Storage) CreateReview(review *model.Review) (int64, error) {
 	const op = "storage.db.CreateReview"
-	query := `INSERT INTO reviews (mentor_email, rating, comment, user_contact, created_at)
-			  VALUES ($1, $2, $3, $4, $5)
+	query := `INSERT INTO reviews (user_id, mentor_email, rating, comment, user_contact, created_at)
+			  VALUES ($1, $2, $3, $4, $5, $6)
 			  RETURNING id;`
 	var newID int64
-	err := s.db.QueryRow(query, review.MentorEmail, review.Rating, review.Comment, review.UserContact, review.CreatedAt).Scan(&newID)
+	err := s.db.QueryRow(query, review.UserID, review.MentorEmail, review.Rating, review.Comment, review.UserContact, review.CreatedAt).Scan(&newID)
 	if err != nil {
 		return -1, fmt.Errorf("%s, %w", op, err)
 	}
@@ -48,8 +48,10 @@ func (s *Storage) CreateReview(review *model.Review) (int64, error) {
 
 func (s *Storage) UpdateReview(review *model.Review) error {
 	const op = "storage.db.UpdateReview"
-	query := `UPDATE reviews SET mentor_email=$1, rating=$2, comment=$3, user_contact=$4 WHERE id=$5;`
-	_, err := s.db.Exec(query, review.MentorEmail, review.Rating, review.Comment, review.UserContact, review.ID)
+	query := `UPDATE reviews
+			  SET mentor_email=$1, rating=$2, comment=$3, user_contact=$4
+			  WHERE id=$5 and user_id=$6;`
+	_, err := s.db.Exec(query, review.MentorEmail, review.Rating, review.Comment, review.UserContact, review.ID, review.UserID)
 	if err != nil {
 		return fmt.Errorf("%s, %w", op, err)
 	}
@@ -71,10 +73,11 @@ func (s *Storage) GetReviewsByMentorEmail(mentorEmail string) ([]model.Review, e
 	return reviews, nil
 }
 
-func (s *Storage) DeleteReview(id int64) error {
+func (s *Storage) DeleteReview(userID, id int64) error {
 	const op = "storage.db.DeleteReview"
-	query := `DELETE FROM reviews WHERE id=$1;`
-	result, err := s.db.Exec(query, id)
+	query := `DELETE FROM reviews
+			  WHERE id=$1 and user_id=$2;`
+	result, err := s.db.Exec(query, userID, id)
 	if err != nil {
 		return fmt.Errorf("%s, %w", op, err)
 	}

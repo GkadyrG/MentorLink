@@ -7,6 +7,8 @@ import (
 	"review/internal/domain/response"
 	"review/internal/lib/logger/sl"
 	"review/internal/lib/validate"
+	mwAuth "review/internal/middleware/auth"
+	"review/pkg/token"
 	"time"
 
 	"github.com/go-chi/chi/middleware"
@@ -25,6 +27,8 @@ func Create(log *slog.Logger, reviewCreater ReviewCreater) http.HandlerFunc {
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
+		claims := r.Context().Value(mwAuth.UserKey).(*token.Claims)
+
 		var req model.Review
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
@@ -33,6 +37,8 @@ func Create(log *slog.Logger, reviewCreater ReviewCreater) http.HandlerFunc {
 			render.JSON(w, r, response.Error("invalid request body"))
 			return
 		}
+
+		req.UserID = claims.UserID
 
 		if err := validate.IsValid(req); err != nil {
 			log.Error("validation error", sl.Err(err))

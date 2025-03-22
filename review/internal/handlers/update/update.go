@@ -7,6 +7,8 @@ import (
 	"review/internal/domain/response"
 	"review/internal/lib/logger/sl"
 	"review/internal/lib/validate"
+	mwAuth "review/internal/middleware/auth"
+	"review/pkg/token"
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
@@ -24,6 +26,13 @@ func Update(log *slog.Logger, reviewUpdate ReviewUpdate) http.HandlerFunc {
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
+		claims, ok := r.Context().Value(mwAuth.UserKey).(*token.Claims)
+		if !ok || claims == nil {
+			render.Status(r, http.StatusUnauthorized)
+			render.JSON(w, r, response.Error("unauthorized"))
+			return
+		}
+
 		var req model.Review
 		if err := render.DecodeJSON(r.Body, &req); err != nil {
 			log.Error("failed to decode request body", sl.Err(err))
@@ -31,6 +40,8 @@ func Update(log *slog.Logger, reviewUpdate ReviewUpdate) http.HandlerFunc {
 			render.JSON(w, r, response.Error("invalid request body"))
 			return
 		}
+
+		req.UserID = claims.UserID
 
 		if err := validate.IsValid(req); err != nil {
 			log.Error("validation error", sl.Err(err))

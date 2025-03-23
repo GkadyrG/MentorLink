@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	AccessTokenTTL  int64 = 300
-	RefreshTokenTTL int64 = 1800
+	AccessTokenTTL  int64 = 1800
+	RefreshTokenTTL int64 = 604800
 )
 
 type RedisRepo interface {

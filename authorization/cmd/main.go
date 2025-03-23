@@ -8,6 +8,7 @@ import (
 	"mentorlink/internal/handlers/logout"
 	"mentorlink/internal/handlers/refresh"
 	"mentorlink/internal/handlers/register"
+	mwLogger "mentorlink/internal/middleware/logger"
 	"os/signal"
 	"syscall"
 	"time"
@@ -61,7 +62,7 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
-	router.Use(middleware.Logger)
+	router.Use(mwLogger.New(log))
 	router.Use(middleware.URLFormat)
 
 	router.Post("/auth/register", register.Register(log, storage))

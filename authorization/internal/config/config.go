@@ -17,7 +17,7 @@ type Config struct {
 
 	Env string `env:"ENV" env-required:"true"`
 
-	AccessTokenTTL  int64 `env:"ACCES_TOKEN_TTL" env-default:"900"`
+	AccessTokenTTL  int64 `env:"ACCES_TOKEN_TTL" env-default:"1800"`
 	RefreshTokenTTL int64 `env:"RESRESH_TOKEN_TTL" env-default:"604800"`
 
 	PrivateKeyPath string `env:"JWT_PRIVATE_KEY_PATH"`

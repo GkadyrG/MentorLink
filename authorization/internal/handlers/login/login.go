@@ -19,8 +19,8 @@ import (
 )
 
 var (
-	AccessTokenTTL  int64 = 300
-	RefreshTokenTTL int64 = 1800
+	AccessTokenTTL  int64 = 1800
+	RefreshTokenTTL int64 = 604800
 )
 
 //go:generate go run github.com/vektra/mockery/v2@latest --name=Auth

@@ -13,6 +13,7 @@ import (
 	"review/internal/handlers/update"
 	"review/internal/lib/logger/sl"
 	mwAuth "review/internal/middleware/auth"
+	mwLogger "review/internal/middleware/logger"
 	"review/internal/storage/db"
 	"review/pkg/token"
 	"syscall"
@@ -56,12 +57,17 @@ func main() {
 
 	router.Use(middleware.RequestID)
 	router.Use(middleware.URLFormat)
-	router.Use(mwAuth.AuthMiddleware(tokenMn, log))
+	router.Use(mwLogger.New(log))
 
-	router.Post("/review/create", create.Create(log, storage))
-	router.Put("/review/update", update.Update(log, storage))
+	router.Group(func(r chi.Router) {
+		r.Use(mwAuth.AuthMiddleware(tokenMn, log))
+		r.Post("/review/create", create.Create(log, storage))
+		r.Put("/review/update", update.Update(log, storage))
+		r.Delete("/review/delete/{id}", del.Delete(log, storage))
+
+	})
+
 	router.Get("/review/get", get.Get(log, storage))
-	router.Delete("/review/delete/{id}", del.Delete(log, storage))
 
 	log.Info("starting server", slog.String("adsress", cfg.Address))
 

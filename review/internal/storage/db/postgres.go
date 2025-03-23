@@ -77,7 +77,7 @@ func (s *Storage) DeleteReview(userID, id int64) error {
 	const op = "storage.db.DeleteReview"
 	query := `DELETE FROM reviews
 			  WHERE id=$1 and user_id=$2;`
-	result, err := s.db.Exec(query, userID, id)
+	result, err := s.db.Exec(query, id, userID)
 	if err != nil {
 		return fmt.Errorf("%s, %w", op, err)
 	}

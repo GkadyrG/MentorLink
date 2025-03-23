@@ -46,8 +46,6 @@ func NewTokenManagerRSA(publicKeyPath string) (*TokenManager, error) {
 func (tm *TokenManager) ParseToken(tokenStr string) (*Claims, error) {
 
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(t *jwt.Token) (interface{}, error) {
-		fmt.Printf("Algorithm: %v\n", t.Method.Alg())
-
 		if t.Method != jwt.SigningMethodRS256 {
 			return nil, ErrInvalidSigningMethod
 		}
@@ -56,7 +54,6 @@ func (tm *TokenManager) ParseToken(tokenStr string) (*Claims, error) {
 	})
 
 	if err != nil {
-		fmt.Printf("Parse error: %v\n", err)
 		return nil, fmt.Errorf("parse token: %w", err)
 	}
 

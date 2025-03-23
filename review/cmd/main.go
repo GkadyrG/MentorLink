@@ -14,6 +14,7 @@ import (
 	"review/internal/lib/logger/sl"
 	mwAuth "review/internal/middleware/auth"
 	mwLogger "review/internal/middleware/logger"
+	"review/internal/storage/cache"
 	"review/internal/storage/db"
 	"review/pkg/token"
 	"syscall"
@@ -48,6 +49,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	redisClient := cache.New(cfg.RedisConfig)
+
+	redisRepository := cache.NewRedisRepository(redisClient)
+
 	tokenMn, err := token.NewTokenManagerRSA(cfg.PublicKeyPath)
 	if err != nil {
 		log.Error("error created a new token manager", sl.Err(err))
@@ -67,7 +72,7 @@ func main() {
 
 	})
 
-	router.Get("/review/get", get.Get(log, storage))
+	router.Get("/review/get", get.Get(log, storage, redisRepository))
 
 	log.Info("starting server", slog.String("adsress", cfg.Address))
 

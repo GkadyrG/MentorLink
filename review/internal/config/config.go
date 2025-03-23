@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"review/internal/storage/cache"
 	postgres "review/internal/storage/db"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 
 type Config struct {
 	postgres.Config
+	cache.RedisConfig
 	Address       string        `env:"ADDRESS" env-required:"true"`
 	Timeout       time.Duration `env:"TIMEOUT" env-default:"4s"`
 	IdleTimeout   time.Duration `env:"IDLE_TIMEOUT" env-default:"60s"`

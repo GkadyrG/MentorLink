@@ -13,11 +13,16 @@ import (
 	"github.com/go-chi/render"
 )
 
-type GetReview interface {
+type GetReviews interface {
 	GetReviewsByMentorEmail(mentorEmail string) ([]model.Review, error)
 }
 
-func Get(log *slog.Logger, getReview GetReview) http.HandlerFunc {
+type RedisRepo interface {
+	GetReviews(email string) ([]model.Review, error, bool)
+	SaveReviews(email string, reviews []model.Review) error
+}
+
+func Get(log *slog.Logger, getReview GetReviews, redisRepo RedisRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.get.Get"
 		log := log.With(
@@ -40,12 +45,23 @@ func Get(log *slog.Logger, getReview GetReview) http.HandlerFunc {
 			return
 		}
 
-		models, err := getReview.GetReviewsByMentorEmail(req.Email)
+		models, err, reviewsExists := redisRepo.GetReviews(req.Email)
 		if err != nil {
-			log.Error("falied to get reviews", sl.Err(err))
-			render.Status(r, http.StatusInternalServerError)
-			render.JSON(w, r, response.Error("server error"))
-			return
+			log.Error("failed to get reviews from redis", sl.Err(err))
+		}
+
+		if !reviewsExists {
+			models, err = getReview.GetReviewsByMentorEmail(req.Email)
+			if err != nil {
+				log.Error("falied to get reviews", sl.Err(err))
+				render.Status(r, http.StatusInternalServerError)
+				render.JSON(w, r, response.Error("server error"))
+				return
+			}
+			err := redisRepo.SaveReviews(req.Email, models)
+			if err != nil {
+				log.Error("falied to save reviews from redis", sl.Err(err))
+			}
 		}
 
 		render.Status(r, http.StatusOK)

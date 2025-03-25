@@ -1,6 +1,8 @@
 package db
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"review/internal/domain/model"
 
@@ -32,11 +34,27 @@ func NewStorage(cfg Config) (*Storage, error) {
 	return &Storage{db: db}, nil
 }
 
+func (s *Storage) IfExist(userID int64, mentorEmail string) (bool, error) {
+	const op = "storage.db.ifExist"
+	query := `SELECT id FROM reviews WHERE user_id=$1 and mentor_email=$2`
+	var id int64
+	err := s.db.Get(&id, query, userID, mentorEmail)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, fmt.Errorf("%s, %w", op, err)
+	}
+
+	return true, nil
+}
+
 func (s *Storage) CreateReview(review *model.Review) (int64, error) {
 	const op = "storage.db.CreateReview"
 	query := `INSERT INTO reviews (user_id, mentor_email, rating, comment, user_contact, created_at)
 			  VALUES ($1, $2, $3, $4, $5, $6)
 			  RETURNING id;`
+
 	var newID int64
 	err := s.db.QueryRow(query, review.UserID, review.MentorEmail, review.Rating, review.Comment, review.UserContact, review.CreatedAt).Scan(&newID)
 	if err != nil {

@@ -17,9 +17,14 @@ import (
 
 type ReviewCreater interface {
 	CreateReview(review *model.Review) (int64, error)
+	IfExist(userID int64, mentorEmail string) (bool, error)
 }
 
-func Create(log *slog.Logger, reviewCreater ReviewCreater) http.HandlerFunc {
+type KafkaProducer interface {
+	SendReviewEvent(review *model.ReviewEvent) error
+}
+
+func Create(log *slog.Logger, reviewCreater ReviewCreater, kafkaProducer KafkaProducer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.create.Create"
 		log := log.With(
@@ -47,6 +52,23 @@ func Create(log *slog.Logger, reviewCreater ReviewCreater) http.HandlerFunc {
 			return
 		}
 
+		exist, err := reviewCreater.IfExist(req.UserID, req.MentorEmail)
+		if err != nil {
+			log.Error("falied to find review", sl.Err(err))
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, response.Error("server error"))
+			return
+		}
+
+		if exist {
+			log.Warn("review already exist")
+			render.Status(r, http.StatusConflict)
+			render.JSON(w, r, map[string]any{
+				"status": "review already exist",
+			})
+			return
+		}
+
 		req.CreatedAt = time.Now()
 		id, err := reviewCreater.CreateReview(&req)
 		if err != nil {
@@ -54,6 +76,17 @@ func Create(log *slog.Logger, reviewCreater ReviewCreater) http.HandlerFunc {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error("server error"))
 			return
+		}
+
+		event := &model.ReviewEvent{
+			Action: "created",
+			ID:     id,
+			Email:  req.MentorEmail,
+			Score:  req.Rating,
+		}
+
+		if err := kafkaProducer.SendReviewEvent(event); err != nil {
+			log.Error("failed to send kafka even", sl.Err(err))
 		}
 
 		render.Status(r, http.StatusCreated)

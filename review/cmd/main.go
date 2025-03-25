@@ -11,6 +11,7 @@ import (
 	del "review/internal/handlers/delete"
 	"review/internal/handlers/get"
 	"review/internal/handlers/update"
+	kafka "review/internal/kafka/producer"
 	"review/internal/lib/logger/sl"
 	mwAuth "review/internal/middleware/auth"
 	mwLogger "review/internal/middleware/logger"
@@ -43,6 +44,17 @@ func main() {
 
 	log.Debug("debug messages are enabled")
 
+	kafkaProducer, err := kafka.NewProducer(
+		[]string{"localhost:29092"},
+		"review-events",
+	)
+
+	if err != nil {
+		log.Error("failed to initialize Kafka producer", sl.Err(err))
+	}
+
+	defer kafkaProducer.Close()
+
 	storage, err := db.NewStorage(cfg.Config)
 	if err != nil {
 		log.Error("error created storage", sl.Err(err))
@@ -66,9 +78,9 @@ func main() {
 
 	router.Group(func(r chi.Router) {
 		r.Use(mwAuth.AuthMiddleware(tokenMn, log))
-		r.Post("/review/create", create.Create(log, storage))
-		r.Put("/review/update", update.Update(log, storage))
-		r.Delete("/review/delete/{id}", del.Delete(log, storage))
+		r.Post("/review/create", create.Create(log, storage, kafkaProducer))
+		r.Put("/review/update", update.Update(log, storage, kafkaProducer))
+		r.Delete("/review/delete/{id}", del.Delete(log, storage, kafkaProducer))
 
 	})
 

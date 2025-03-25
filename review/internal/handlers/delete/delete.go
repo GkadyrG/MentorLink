@@ -3,6 +3,7 @@ package del
 import (
 	"log/slog"
 	"net/http"
+	"review/internal/domain/model"
 	"review/internal/domain/response"
 	"review/internal/lib/logger/sl"
 	mwAuth "review/internal/middleware/auth"
@@ -18,7 +19,11 @@ type DelReview interface {
 	DeleteReview(userID, id int64) error
 }
 
-func Delete(log *slog.Logger, delreview DelReview) http.HandlerFunc {
+type KafkaProducer interface {
+	SendReviewEvent(review *model.ReviewEvent) error
+}
+
+func Delete(log *slog.Logger, delreview DelReview, kafkaProducer KafkaProducer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.delete.Delete"
 		log := log.With(
@@ -47,6 +52,17 @@ func Delete(log *slog.Logger, delreview DelReview) http.HandlerFunc {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error("server error"))
 			return
+		}
+
+		event := &model.ReviewEvent{
+			Action: "updated",
+			ID:     id,
+			Email:  "",
+			Score:  0.0,
+		}
+
+		if err := kafkaProducer.SendReviewEvent(event); err != nil {
+			log.Error("failed to send kafka event", sl.Err(err))
 		}
 
 		render.Status(r, http.StatusOK)

@@ -18,7 +18,11 @@ type ReviewUpdate interface {
 	UpdateReview(review *model.Review) error
 }
 
-func Update(log *slog.Logger, reviewUpdate ReviewUpdate) http.HandlerFunc {
+type KafkaProducer interface {
+	SendReviewEvent(review *model.ReviewEvent) error
+}
+
+func Update(log *slog.Logger, reviewUpdate ReviewUpdate, kafkaProducer KafkaProducer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.update.Update"
 		log := log.With(
@@ -55,6 +59,17 @@ func Update(log *slog.Logger, reviewUpdate ReviewUpdate) http.HandlerFunc {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error("server error"))
 			return
+		}
+
+		event := &model.ReviewEvent{
+			Action: "updated",
+			ID:     req.ID,
+			Email:  req.MentorEmail,
+			Score:  req.Rating,
+		}
+
+		if err := kafkaProducer.SendReviewEvent(event); err != nil {
+			log.Error("failed to send kafka event", sl.Err(err))
 		}
 
 		render.Status(r, http.StatusOK)

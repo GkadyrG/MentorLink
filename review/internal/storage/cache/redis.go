@@ -71,12 +71,4 @@ func (r *RedisRepository) SaveReviews(email string, reviews []model.Review) erro
 	return nil
 }
 
-func (r *RedisRepository) DelReviewsByKey(email string) error {
-	const op = "storage.cache.DelReviewsByKey"
-	key := "reviews:" + email
-	err := r.Client.Del(key).Err()
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	return nil
-}
+

@@ -5,12 +5,15 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"rating/internal/config"
 	"rating/internal/kafka"
 	"rating/internal/repository"
 	"syscall"
 )
 
 func main() {
+	cfg := config.LoadConfig()
+
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	logger.Info("starting rating server")
 
@@ -29,12 +32,8 @@ func main() {
 
 	go consumer.Run(ctx, "reviews-topic")
 
-	select {
-	case <-sigChan:
-		logger.Info("signal caught, shutting down gracefulle")
-	case <-ctx.Done():
-		logger.Info("context cancelled, shutting down gracefully...")
-	}
+	<-sigChan
+	logger.Info("signal caught, shutting down gracefulle")
 
 	cancel()
 

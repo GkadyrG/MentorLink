@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option go_package = "proto";
+
+package rating;
+
+service RatingService {
+    rpc IncreaseMentorRating(IncreaseRatingRequest) returns (RatingResponse);
+    rpc UpdateMentorRating(UpdateRatingRequest) returns (RatingResponse);
+    rpc DeleteMentorRating(DeleteRatingRequest) returns (RatingResponse);
+}
+
+
+message IncreaseRatingRequest {
+    string mentor
+}

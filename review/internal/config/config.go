@@ -12,6 +12,8 @@ import (
 type Config struct {
 	postgres.Config
 	cache.RedisConfig
+	KafkaBroker   string        `env:"KAFKA_BROKERS"`
+	KafkaTopic    string        `env:"KAFKA_TOPIC"`
 	Address       string        `env:"ADDRESS" env-required:"true"`
 	Timeout       time.Duration `env:"TIMEOUT" env-default:"4s"`
 	IdleTimeout   time.Duration `env:"IDLE_TIMEOUT" env-default:"60s"`

@@ -3,6 +3,7 @@ package kafka
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"review/internal/domain/model"
 
 	"github.com/IBM/sarama"
@@ -11,9 +12,10 @@ import (
 type Producer struct {
 	producer sarama.SyncProducer
 	topic    string
+	logger   *slog.Logger
 }
 
-func NewProducer(brokers []string, topic string) (*Producer, error) {
+func NewProducer(brokers []string, topic string, logger *slog.Logger) (*Producer, error) {
 	config := sarama.NewConfig()
 
 	// Гарантия доставки
@@ -31,6 +33,7 @@ func NewProducer(brokers []string, topic string) (*Producer, error) {
 	return &Producer{
 		producer: producer,
 		topic:    topic,
+		logger:   logger,
 	}, nil
 }
 
@@ -47,8 +50,10 @@ func (p *Producer) SendReviewEvent(review *model.ReviewEvent) error {
 		Value: sarama.ByteEncoder(jsonData),
 	}
 
-	_, _, err = p.producer.SendMessage(msg)
+	partition, offset, err := p.producer.SendMessage(msg)
+
 	if err != nil {
+		p.logger.Error("fali sand messgae", "partiotion", partition, "offset", offset)
 		return fmt.Errorf("failed to send message: %w", err)
 	}
 

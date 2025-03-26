@@ -45,8 +45,9 @@ func main() {
 	log.Debug("debug messages are enabled")
 
 	kafkaProducer, err := kafka.NewProducer(
-		[]string{"localhost:29092"},
-		"review-events",
+		[]string{cfg.KafkaBroker},
+		cfg.KafkaTopic,
+		log,
 	)
 
 	if err != nil {

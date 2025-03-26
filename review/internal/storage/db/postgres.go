@@ -105,3 +105,17 @@ func (s *Storage) DeleteReview(userID, id int64) error {
 	}
 	return nil
 }
+
+func (s *Storage) GetReviewByID(id int64) (*model.Review, error) {
+	const op = "storage.db.GetReviewByID"
+	query := `SELECT id, mentor_email, rating, comment, user_contact, created_at
+			  FROM reviews 
+			  WHERE id=$1`
+
+	var review model.Review
+	err := s.db.Get(&review, query, id)
+	if err != nil {
+		return nil, fmt.Errorf("%s, %w", op, err)
+	}
+	return &review, nil
+}

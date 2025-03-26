@@ -17,6 +17,7 @@ import (
 
 type DelReview interface {
 	DeleteReview(userID, id int64) error
+	GetReviewByID(id int64) (*model.Review, error)
 }
 
 type KafkaProducer interface {
@@ -54,11 +55,19 @@ func Delete(log *slog.Logger, delreview DelReview, kafkaProducer KafkaProducer) 
 			return
 		}
 
+		rev, err := delreview.GetReviewByID(id)
+		if err != nil {
+			log.Error("failed to get review by id", sl.Err(err))
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, response.Error("server error"))
+			return
+		}
+
 		event := &model.ReviewEvent{
-			Action: "updated",
+			Action: "deleted",
 			ID:     id,
-			Email:  "",
-			Score:  0.0,
+			Email:  rev.MentorEmail,
+			Score:  rev.Rating,
 		}
 
 		if err := kafkaProducer.SendReviewEvent(event); err != nil {

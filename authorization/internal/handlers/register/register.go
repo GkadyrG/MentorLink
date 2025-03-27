@@ -1,6 +1,7 @@
 package register
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"mentorlink/internal/domain/model"
@@ -22,7 +23,11 @@ type UserCreater interface {
 	GetByEmail(email string) (*model.User, error)
 }
 
-func Register(log *slog.Logger, userCreater UserCreater) http.HandlerFunc {
+type NewMentor interface {
+	NewMentor(ctx context.Context, mentorEmail, contact string) error
+}
+
+func Register(ctx context.Context, log *slog.Logger, userCreater UserCreater, newMentor NewMentor) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.register.Register"
 		log := log.With(
@@ -73,6 +78,10 @@ func Register(log *slog.Logger, userCreater UserCreater) http.HandlerFunc {
 			Email:    req.Email,
 			Password: string(hash),
 			Role:     req.Role,
+		}
+
+		if user.Role == model.RoleMentor {
+			newMentor.NewMentor(ctx, req.Email, req.Contact)
 		}
 
 		if err = userCreater.CreateUser(user); err != nil {

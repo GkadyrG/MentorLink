@@ -2,6 +2,7 @@ package register
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -79,6 +80,7 @@ func TestRegisterHandler(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			userCreaterMock := mocks.NewUserCreater(t)
+			newMentorMock := mocks.NewNewMentor(t)
 
 			// Настройка моков только для кейсов с обращением к БД
 			if tc.name != "Passwords mismatch" && tc.name != "Invalid role" {
@@ -96,7 +98,7 @@ func TestRegisterHandler(t *testing.T) {
 					Return(tc.mockError).Once()
 			}
 
-			handler := Register(slogdiscard.NewDiscardLogger(), userCreaterMock)
+			handler := Register(slogdiscard.NewDiscardLogger(), context.Background(), userCreaterMock, newMentorMock)
 
 			body := fmt.Sprintf(
 				`{"email": "%s", "password": "%s", "repeat_password": "%s", "role": "%s"}`,

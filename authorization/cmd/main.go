@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"mentorlink/internal/config"
+	grpcclient "mentorlink/internal/grpc/client"
 	"mentorlink/internal/handlers/login"
 	"mentorlink/internal/handlers/logout"
 	"mentorlink/internal/handlers/refresh"
@@ -59,13 +60,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	client, err := grpcclient.NewMentorClient(cfg.Address)
+	if err != nil {
+		log.Error("error with new grpc client", sl.Err(err))
+		os.Exit(1)
+	}
+
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
 	router.Use(mwLogger.New(log))
 	router.Use(middleware.URLFormat)
 
-	router.Post("/auth/register", register.Register(log, storage))
+	router.Post("/auth/register", register.Register(context.Background(), log, storage, client))
 	router.Post("/auth/login", login.Login(log, storage, tokemMn))
 	router.Post("/auth/logout", logout.Logout(log, redisRepository, tokemMn))
 	router.Post("/auth/refresh", refresh.RefreshTokens(log, redisRepository, tokemMn))

@@ -12,3 +12,8 @@ type User struct {
 	Password string `db:"password"`
 	Role     string `db:"role"` // admin, mentor, user
 }
+
+type Mentor struct {
+	MentorEmail string
+	Contact     string
+}

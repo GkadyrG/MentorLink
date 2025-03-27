@@ -5,6 +5,7 @@ type Register struct {
 	Password       string `json:"password" validate:"required,min=6"`
 	RepeatPassword string `json:"repeat_password" validate:"required,eqfield=Password"`
 	Role           string `json:"role" validate:"required,oneof=user mentor admin"`
+	Contact        string `json:"contact"`
 }
 
 type Login struct {

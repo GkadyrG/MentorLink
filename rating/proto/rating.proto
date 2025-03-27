@@ -1,16 +1,28 @@
 syntax = "proto3";
 
-option go_package = "proto";
+option go_package = "rating/pkg/api";
 
 package rating;
 
-service RatingService {
-    rpc IncreaseMentorRating(IncreaseRatingRequest) returns (RatingResponse);
-    rpc UpdateMentorRating(UpdateRatingRequest) returns (RatingResponse);
-    rpc DeleteMentorRating(DeleteRatingRequest) returns (RatingResponse);
+service MentorService {
+    rpc MethodMentorRating(RatingRequest) returns (Response);
+    rpc NewMentor(MentorRequest) returns (Response);
+}
+
+message RatingRequest {
+    string action = 1;
+    string mentor_email = 2;
+    float rating = 3;
+}
+
+message MentorRequest {
+    string mentor_email = 1;
+    string contact = 2;
+}
+
+message Response {
+    bool success = 1;
+    string message = 2;
 }
 
 
-message IncreaseRatingRequest {
-    string mentor
-}

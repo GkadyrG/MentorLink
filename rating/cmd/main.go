@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"rating/internal/config"
 	"rating/internal/kafka"
-	"rating/internal/repository"
+	grpccleint "rating/internal/transport/grpc/client"
 	"syscall"
 )
 
@@ -17,20 +17,25 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	logger.Info("starting rating server")
 
-	repo := repository.NewRepository()
+	mentorClient, err := grpccleint.NewMentorClient(cfg.MentorServiceAddress)
+	if err != nil {
+		logger.Error("failed to connect to mentor service", "error", err)
+		os.Exit(1)
+	}
+	defer mentorClient.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-	consumer, err := kafka.NewConsumer([]string{"localhost:9092"}, "my-group", repo, logger)
+	consumer, err := kafka.NewConsumer([]string{cfg.KafkaBroker}, cfg.KafkaGroupID, mentorClient, logger)
 	if err != nil {
 		logger.Error("failed to create consumer", "error", err)
 		os.Exit(1)
 	}
 
-	go consumer.Run(ctx, "reviews-topic")
+	go consumer.Run(ctx, cfg.KafkaTopic)
 
 	<-sigChan
 	logger.Info("signal caught, shutting down gracefulle")

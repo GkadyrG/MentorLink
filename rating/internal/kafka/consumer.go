@@ -5,19 +5,16 @@ import (
 	"encoding/json"
 	"log/slog"
 	"rating/internal/domain/models"
+	grpccleint "rating/internal/transport/grpc/client"
 
 	"github.com/IBM/sarama"
 )
 
-type Repository interface {
-	SaveReview(ctx context.Context, review *models.ReviewEvent) error
-}
-
 type Consumer struct {
-	consumer   sarama.ConsumerGroup
-	handler    *consumerHandler
-	repository Repository
-	log        *slog.Logger
+	consumer     sarama.ConsumerGroup
+	handler      *consumerHandler
+	mentorClient *grpccleint.MentorClient
+	log          *slog.Logger
 }
 
 type consumerHandler struct {
@@ -26,7 +23,7 @@ type consumerHandler struct {
 	log       *slog.Logger
 }
 
-func NewConsumer(brokers []string, groupID string, repo Repository, logger *slog.Logger) (*Consumer, error) {
+func NewConsumer(brokers []string, groupID string, mentorClient *grpccleint.MentorClient, logger *slog.Logger) (*Consumer, error) {
 	config := sarama.NewConfig()
 	config.Version = sarama.V2_8_0_0
 	config.Consumer.Offsets.Initial = sarama.OffsetNewest
@@ -44,10 +41,10 @@ func NewConsumer(brokers []string, groupID string, repo Repository, logger *slog
 	}
 
 	return &Consumer{
-		consumer:   consumerGroup,
-		handler:    handler,
-		repository: repo,
-		log:        logger,
+		consumer:     consumerGroup,
+		handler:      handler,
+		mentorClient: mentorClient,
+		log:          logger,
 	}, nil
 }
 
@@ -83,7 +80,7 @@ func (h *consumerHandler) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 
 func (c *Consumer) Run(ctx context.Context, topic string) {
 	c.handler.processor = func(ctx context.Context, msg *models.ReviewEvent) error {
-		return c.repository.SaveReview(ctx, msg)
+		return c.mentorClient.MethodMentorRating(ctx, msg.Action, msg.Email, msg.Score)
 	}
 
 	go func() {

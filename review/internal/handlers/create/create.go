@@ -79,7 +79,7 @@ func Create(log *slog.Logger, reviewCreater ReviewCreater, kafkaProducer KafkaPr
 		}
 
 		event := &model.ReviewEvent{
-			Action: "created",
+			Action: "updated",
 			ID:     id,
 			Email:  req.MentorEmail,
 			Score:  req.Rating,

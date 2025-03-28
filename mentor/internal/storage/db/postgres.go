@@ -33,7 +33,7 @@ func NewStorage(cfg Config) (*Storage, error) {
 	return &Storage{db: db}, nil
 }
 
-func (s *Storage) CreateMentor(ctx context.Context, mentor requests.MentorRequest) error {
+func (s *Storage) CreateMentor(ctx context.Context, mentor *requests.MentorRequest) error {
 	const op = "storage.db.postgres.SaveMentor"
 	queury := `INSERT INTO users (mentor_email, contact)
 			   VALUES($1, $2)

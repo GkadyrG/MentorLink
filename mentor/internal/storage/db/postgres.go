@@ -1,7 +1,10 @@
 package db
 
 import (
+	"context"
 	"fmt"
+	"mentor/internal/domain/models"
+	"mentor/internal/domain/requests"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -28,4 +31,58 @@ func NewStorage(cfg Config) (*Storage, error) {
 	}
 
 	return &Storage{db: db}, nil
+}
+
+func (s *Storage) CreateMentor(ctx context.Context, mentor requests.MentorRequest) error {
+	const op = "storage.db.postgres.SaveMentor"
+	queury := `INSERT INTO users (mentor_email, contact)
+			   VALUES($1, $2)
+			   RETURNING id`
+	var newID int64
+	err := s.db.QueryRow(queury, mentor.MentorEmail, mentor.Contact).Scan(&newID)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
+func (s *Storage) Get(ctx context.Context) ([]models.MentorTable, error) {
+	const op = "storage.db.postgres.Get"
+	query := `SELECT mentor_email, contact, average_rating
+			  FROM mentors
+			  ORDER BY DESC;`
+
+	var mentors []models.MentorTable
+	err := s.db.Select(&mentors, query)
+	if err != nil {
+		return []models.MentorTable{}, fmt.Errorf("%s, %w", op, err)
+	}
+	return mentors, nil
+}
+
+func (s *Storage) UpdateMentor(ctx context.Context, mentor *requests.RatingRequest) error {
+	const op = "storage.db.postgres.UpdateMentor"
+	query := `UPDATE mentors
+			  SET count_reviews = count_reviews + 1, sum_rating = sum_rating + $1
+			  WHERE mentor_email=$2`
+	_, err := s.db.Exec(query, mentor.Rating, mentor.MentorEmail)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
+func (s *Storage) DeleteReviewByMentor(ctx context.Context, mentor *requests.RatingRequest) error {
+	const op = "storage.db.postgres.DeleteReviewByMentor"
+	query := `UPDATE mentors
+			  SET count_reviews = count_reviews - 1, sum_rating = sum_rating - $1
+			  WHERE mentor_email=$2`
+	_, err := s.db.Exec(query, mentor.Rating, mentor.MentorEmail)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
 }

@@ -3,6 +3,8 @@ module mentor
 go 1.23.4
 
 require (
+	github.com/go-chi/chi/v5 v5.2.1
+	github.com/go-chi/render v1.0.3
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jmoiron/sqlx v1.4.0
@@ -12,6 +14,7 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
+	github.com/ajg/form v1.5.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect

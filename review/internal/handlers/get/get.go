@@ -45,20 +45,20 @@ func Get(log *slog.Logger, getReview GetReviews, redisRepo RedisRepo) http.Handl
 			return
 		}
 
-		models, err, reviewsExists := redisRepo.GetReviews(req.Email)
+		reviews, err, reviewsExists := redisRepo.GetReviews(req.Email)
 		if err != nil {
 			log.Error("failed to get reviews from redis", sl.Err(err))
 		}
 
 		if !reviewsExists {
-			models, err = getReview.GetReviewsByMentorEmail(req.Email)
+			reviews, err = getReview.GetReviewsByMentorEmail(req.Email)
 			if err != nil {
 				log.Error("falied to get reviews", sl.Err(err))
 				render.Status(r, http.StatusInternalServerError)
 				render.JSON(w, r, response.Error("server error"))
 				return
 			}
-			err := redisRepo.SaveReviews(req.Email, models)
+			err := redisRepo.SaveReviews(req.Email, reviews)
 			if err != nil {
 				log.Error("falied to save reviews from redis", sl.Err(err))
 			}
@@ -66,7 +66,7 @@ func Get(log *slog.Logger, getReview GetReviews, redisRepo RedisRepo) http.Handl
 
 		render.Status(r, http.StatusOK)
 		render.JSON(w, r, map[string]any{
-			"models": models,
+			"reviews": reviews,
 		})
 
 	}

@@ -10,7 +10,6 @@ import (
 const (
 	ActionUpdate = "updated"
 	ActionDelete = "deleted"
-	ActionCreate = "created"
 )
 
 type Repository interface {
@@ -50,7 +49,7 @@ func (s *MentorService) MethodMentorRating(ctx context.Context, req *client.Rati
 			Message: "ok",
 		}, nil
 
-	case ActionUpdate, ActionCreate:
+	case ActionUpdate:
 		err := s.repo.UpdateMentor(ctx, request)
 		if err != nil {
 			return &client.Response{
@@ -64,9 +63,6 @@ func (s *MentorService) MethodMentorRating(ctx context.Context, req *client.Rati
 			Success: true,
 			Message: "ok",
 		}, nil
-
-	case ActionCreate:
-		err := s.repo.CreateMentor(ctx, req)
 
 	default:
 		return &client.Response{

@@ -98,7 +98,7 @@ func TestRegisterHandler(t *testing.T) {
 					Return(tc.mockError).Once()
 			}
 
-			handler := Register(slogdiscard.NewDiscardLogger(), context.Background(), userCreaterMock, newMentorMock)
+			handler := Register(context.Background(), slogdiscard.NewDiscardLogger(), userCreaterMock, newMentorMock)
 
 			body := fmt.Sprintf(
 				`{"email": "%s", "password": "%s", "repeat_password": "%s", "role": "%s"}`,

@@ -12,7 +12,7 @@ const (
 	ActionDelete = "deleted"
 )
 
-type Repository interface {
+type PostgresRepository interface {
 	UpdateMentor(ctx context.Context, mentor *requests.RatingRequest) error
 	DeleteReviewByMentor(ctx context.Context, mentor *requests.RatingRequest) error
 	CreateMentor(ctx context.Context, mentor *requests.MentorRequest) error
@@ -20,10 +20,10 @@ type Repository interface {
 
 type MentorService struct {
 	client.UnimplementedMentorServiceServer
-	repo Repository
+	repo PostgresRepository
 }
 
-func NewMentorService(repo Repository) *MentorService {
+func NewMentorService(repo PostgresRepository) *MentorService {
 	return &MentorService{repo: repo}
 }
 

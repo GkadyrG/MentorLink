@@ -7,6 +7,7 @@ import (
 	"mentor/internal/domain/requests"
 
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
 type Config struct {

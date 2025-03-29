@@ -8,6 +8,8 @@ require (
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jmoiron/sqlx v1.4.0
+	github.com/lib/pq v1.10.9
+	golang.org/x/sync v0.12.0
 	google.golang.org/grpc v1.71.0
 	google.golang.org/protobuf v1.36.6
 )

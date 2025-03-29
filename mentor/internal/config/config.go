@@ -14,7 +14,7 @@ type Config struct {
 	cache.RedisConfig
 
 	AddressServerHTTP string `env:"ADDRESS_SERVER_HTTP" env-required:"true"`
-	AddressServerGRPC string `env:"ADDRESS_SERVER_GRPC" env-required:"true"`
+	GRPCPort          int    `env:"GRPC_PORT" env-required:"true"`
 
 	Env string `env:"ENV" env-required:"true"`
 

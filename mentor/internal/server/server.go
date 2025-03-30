@@ -70,22 +70,27 @@ func New(ctx context.Context, log *slog.Logger, cfg *config.Config, postgresRepo
 func (s *Server) Start(ctx context.Context, log *slog.Logger) error {
 	eg := errgroup.Group{}
 
-	log.Info("gRPC server started")
+	log.Info("starting server")
+
 	eg.Go(func() error {
+		log.Debug("gRPPC server starting", "addr", s.grpcListener.Addr())
 		if err := s.grpcServer.Serve(s.grpcListener); err != nil {
+			log.Error("gRPC server failed", "error", err)
 			return fmt.Errorf("gRPC server error: %w", err)
 		}
 		return nil
 	})
 
-	log.Info("http server started")
 	eg.Go(func() error {
+		log.Debug("http server starting", "addr", s.httpServer.Addr)
 		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Error("http server failed", "error", err)
 			return fmt.Errorf("HTTP server error: %w", err)
 		}
 		return nil
 	})
 
+	log.Info("server started successfully")
 	return eg.Wait()
 }
 

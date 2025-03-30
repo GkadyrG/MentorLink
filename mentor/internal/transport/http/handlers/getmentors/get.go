@@ -40,6 +40,7 @@ func Get(ctx context.Context, log *slog.Logger, getMentors GetMentors, redisRepo
 				log.Error("failed to get mentors", sl.Err(err))
 				render.Status(r, http.StatusInternalServerError)
 				render.JSON(w, r, response.Error("server error"))
+				return
 			}
 			err := redisRepo.SaveMentors(ctx, mentors)
 			if err != nil {

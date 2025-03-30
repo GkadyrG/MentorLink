@@ -52,7 +52,7 @@ func (s *Storage) Get(ctx context.Context) ([]models.MentorTable, error) {
 	const op = "storage.db.postgres.Get"
 	query := `SELECT mentor_email, contact, average_rating
 			  FROM mentors
-			  ORDER BY DESC;`
+			  ORDER BY average_rating DESC;`
 
 	var mentors []models.MentorTable
 	err := s.db.Select(&mentors, query)

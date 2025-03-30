@@ -36,7 +36,7 @@ func NewStorage(cfg Config) (*Storage, error) {
 
 func (s *Storage) CreateMentor(ctx context.Context, mentor *requests.MentorRequest) error {
 	const op = "storage.db.postgres.SaveMentor"
-	queury := `INSERT INTO users (mentor_email, contact)
+	queury := `INSERT INTO mentors (mentor_email, contact)
 			   VALUES($1, $2)
 			   RETURNING id`
 	var newID int64

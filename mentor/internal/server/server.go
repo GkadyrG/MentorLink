@@ -45,7 +45,7 @@ func New(ctx context.Context, log *slog.Logger, cfg *config.Config, postgresRepo
 
 	opts := []grpc.ServerOption{}
 	grpcSrv := grpc.NewServer(opts...)
-	mentorSrv := mentorservice.NewMentorService(postgresRepository)
+	mentorSrv := mentorservice.NewMentorService(log, postgresRepository)
 	client.RegisterMentorServiceServer(grpcSrv, mentorSrv)
 
 	router := chi.NewRouter()
@@ -67,9 +67,10 @@ func New(ctx context.Context, log *slog.Logger, cfg *config.Config, postgresRepo
 
 }
 
-func (s *Server) Start(ctx context.Context) error {
+func (s *Server) Start(ctx context.Context, log *slog.Logger) error {
 	eg := errgroup.Group{}
 
+	log.Info("gRPC server started")
 	eg.Go(func() error {
 		if err := s.grpcServer.Serve(s.grpcListener); err != nil {
 			return fmt.Errorf("gRPC server error: %w", err)
@@ -77,6 +78,7 @@ func (s *Server) Start(ctx context.Context) error {
 		return nil
 	})
 
+	log.Info("http server started")
 	eg.Go(func() error {
 		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			return fmt.Errorf("HTTP server error: %w", err)

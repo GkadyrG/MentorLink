@@ -53,8 +53,9 @@ func main() {
 	doneChan := make(chan os.Signal, 1)
 	signal.Notify(doneChan, syscall.SIGINT, syscall.SIGTERM)
 
+	log.Info("starting server")
 	go func() {
-		if err := server.Start(ctx); err != nil {
+		if err := server.Start(ctx, log); err != nil {
 			log.Error("failed to start server", sl.Err(err))
 			os.Exit(1)
 		}

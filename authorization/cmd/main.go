@@ -67,6 +67,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Error("failed to close gRPC client", sl.Err(err))
+		} else {
+			log.Debug("gRPC client closed successfully")
+		}
+	}()
+
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)

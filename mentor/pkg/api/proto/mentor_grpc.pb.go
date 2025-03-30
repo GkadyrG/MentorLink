@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MentorService_MethodMentorRating_FullMethodName = "/mentorProto.MentorService/MethodMentorRating"
-	MentorService_NewMentor_FullMethodName          = "/mentorProto.MentorService/NewMentor"
+	MentorService_MethodMentorRating_FullMethodName = "/mentor.MentorService/MethodMentorRating"
+	MentorService_NewMentor_FullMethodName          = "/mentor.MentorService/NewMentor"
 )
 
 // MentorServiceClient is the client API for MentorService service.
@@ -142,7 +142,7 @@ func _MentorService_NewMentor_Handler(srv interface{}, ctx context.Context, dec 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var MentorService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "mentorProto.MentorService",
+	ServiceName: "mentor.MentorService",
 	HandlerType: (*MentorServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

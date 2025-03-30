@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "mentor/pkg/api";
 
-package mentorProto;
+package mentor;
 
 service MentorService {
     rpc MethodMentorRating(RatingRequest) returns (Response);

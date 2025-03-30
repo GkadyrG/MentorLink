@@ -81,7 +81,12 @@ func Register(ctx context.Context, log *slog.Logger, userCreater UserCreater, ne
 		}
 
 		if user.Role == model.RoleMentor {
-			newMentor.NewMentor(ctx, req.Email, req.Contact)
+			if err := newMentor.NewMentor(ctx, req.Email, req.Contact); err != nil {
+				log.Error("failed to call NewMentor via gRPC", sl.Err(err))
+				render.Status(r, http.StatusInternalServerError)
+				render.JSON(w, r, response.Error("mentor registration failed"))
+				return
+			}
 		}
 
 		if err = userCreater.CreateUser(user); err != nil {

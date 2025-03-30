@@ -48,6 +48,6 @@ func (m *MentorClient) NewMentor(ctx context.Context, mentorEmail, contact strin
 	if !resp.Success {
 		return fmt.Errorf("server resonded with success=false, message=%s", resp.Message)
 	}
-
+	fmt.Println(("grpc request send"))
 	return nil
 }

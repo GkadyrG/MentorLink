@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"mentorlink/internal/config"
 	grpcclient "mentorlink/internal/grpc/client"
@@ -60,7 +61,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := grpcclient.NewMentorClient(cfg.Address)
+	client, err := grpcclient.NewMentorClient(fmt.Sprintf("localhost:%s", cfg.MentorServiceAddress))
 	if err != nil {
 		log.Error("error with new grpc client", sl.Err(err))
 		os.Exit(1)

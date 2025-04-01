@@ -81,10 +81,10 @@ func main() {
 	router.Use(mwLogger.New(log))
 	router.Use(middleware.URLFormat)
 
-	router.Post("/api/auth/register", register.Register(context.Background(), log, storage, client))
-	router.Post("/api/auth/login", login.Login(log, storage, tokemMn))
-	router.Post("/api/auth/logout", logout.Logout(log, redisRepository, tokemMn))
-	router.Post("/api/auth/refresh", refresh.RefreshTokens(log, redisRepository, tokemMn))
+	router.Post("/auth/register", register.Register(context.Background(), log, storage, client))
+	router.Post("/auth/login", login.Login(log, storage, tokemMn))
+	router.Post("/auth/logout", logout.Logout(log, redisRepository, tokemMn))
+	router.Post("/auth/refresh", refresh.RefreshTokens(log, redisRepository, tokemMn))
 
 	log.Info("starting server", slog.String("adsress", cfg.Address))
 

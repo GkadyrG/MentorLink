@@ -79,13 +79,13 @@ func main() {
 
 	router.Group(func(r chi.Router) {
 		r.Use(mwAuth.AuthMiddleware(tokenMn, log))
-		r.Post("/api/review/create", create.Create(log, storage, kafkaProducer))
-		r.Put("/api/review/update", update.Update(log, storage, kafkaProducer))
-		r.Delete("/api/review/delete/{id}", del.Delete(log, storage, kafkaProducer))
+		r.Post("/review/create", create.Create(log, storage, kafkaProducer))
+		r.Put("/review/update", update.Update(log, storage, kafkaProducer))
+		r.Delete("/review/delete/{id}", del.Delete(log, storage, kafkaProducer))
 
 	})
 
-	router.Get("/api/review/get", get.Get(log, storage, redisRepository))
+	router.Get("/review/get", get.Get(log, storage, redisRepository))
 
 	log.Info("starting server", slog.String("adsress", cfg.Address))
 

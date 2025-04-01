@@ -34,7 +34,7 @@ func NewRouter(cfg *config.Config) http.Handler {
 	router.Use(middleware.Recoverer)
 
 	auth := cfg.Auth
-	router.Route("/api/auth", func(r chi.Router) {
+	router.Route("/auth", func(r chi.Router) {
 		r.Post("/register", newProxy(auth))
 		r.Post("/login", newProxy(auth))
 		r.Post("/refresh", newProxy(auth))
@@ -42,7 +42,7 @@ func NewRouter(cfg *config.Config) http.Handler {
 	})
 
 	reviewService := cfg.Review
-	router.Route("/api/review", func(r chi.Router) {
+	router.Route("/review", func(r chi.Router) {
 		r.Post("/create", newProxy(reviewService))
 		r.Post("/update", newProxy(reviewService))
 		r.Post("/delete/{id}", newProxy(reviewService))
@@ -50,7 +50,7 @@ func NewRouter(cfg *config.Config) http.Handler {
 	})
 
 	mentorService := cfg.Mentor
-	router.Route("/api/mentors", func(r chi.Router) {
+	router.Route("/mentors", func(r chi.Router) {
 		r.Get("/get", newProxy(mentorService))
 	})
 

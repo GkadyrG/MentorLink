@@ -1,21 +1,14 @@
-FROM golang:1-23-alpine AS builder
-
+FROM golang:1.23-alpine AS builder
 WORKDIR /app
-
 COPY go.mod ./
-
 RUN go mod download
-
 COPY . .
-
-RUN go build -o api-gateway ./main
+RUN go build -o api-gateway ./cmd
 
 FROM alpine:3.19
-
 RUN apk --no-cache add ca-certificates
-
-COPY --from=builder /app/api-gateway /api-gateway
-
+WORKDIR /app
+COPY --from=builder /app/api-gateway /app/api-gateway
+COPY --from=builder /app/.env /app/.env 
 EXPOSE 8080
-
-CMD ["/api-gateway"]
+CMD ["/app/api-gateway"]

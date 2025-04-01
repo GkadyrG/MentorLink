@@ -6,3 +6,18 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "80:80"
+
+  api-gateway-server:
+    container_name: api-gateway-server
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - app-network
+
+
+
+networks:
+  app-network:
+    driver: bridge
+

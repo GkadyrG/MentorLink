@@ -49,7 +49,7 @@ func New(ctx context.Context, log *slog.Logger, cfg *config.Config, postgresRepo
 	client.RegisterMentorServiceServer(grpcSrv, mentorSrv)
 
 	router := chi.NewRouter()
-	router.Get("/mentors/get", get.Get(ctx, log, postgresRepository, redisRepository))
+	router.Get("/api/mentors/get", get.Get(ctx, log, postgresRepository, redisRepository))
 
 	httpSrv := &http.Server{
 		Addr:         cfg.AddressServerHTTP,

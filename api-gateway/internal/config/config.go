@@ -8,7 +8,7 @@ import (
 )
 
 type Config struct {
-	Address string `env:"ADRESS" env-required:"true"`
+	Address string `env:"ADDRESS" env-required:"true"`
 
 	Auth   string `env:"AUTH" env-required:"true"`
 	Review string `env:"REVIEW" env-required:"true"`

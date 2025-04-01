@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"api-gateway/internal/config"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -25,14 +26,14 @@ func newProxy(target string) http.HandlerFunc {
 	return proxy.ServeHTTP
 }
 
-func NewRouter() http.Handler {
+func NewRouter(cfg *config.Config) http.Handler {
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 
-	auth := "http://auth-service:8081"
+	auth := cfg.Auth
 	router.Route("/api/auth", func(r chi.Router) {
 		r.Post("/register", newProxy(auth))
 		r.Post("/login", newProxy(auth))
@@ -40,7 +41,7 @@ func NewRouter() http.Handler {
 		r.Post("/logout", newProxy(auth))
 	})
 
-	reviewService := "http://review:8082"
+	reviewService := cfg.Review
 	router.Route("/api/review", func(r chi.Router) {
 		r.Post("/create", newProxy(reviewService))
 		r.Post("/update", newProxy(reviewService))
@@ -48,7 +49,7 @@ func NewRouter() http.Handler {
 		r.Post("/get", newProxy(reviewService))
 	})
 
-	mentorService := "http://mentor:8083"
+	mentorService := cfg.Mentor
 	router.Route("/api/mentors", func(r chi.Router) {
 		r.Get("/get", newProxy(mentorService))
 	})

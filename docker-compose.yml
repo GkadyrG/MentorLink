@@ -31,6 +31,11 @@ services:
     ports:
       - "5432:5432"
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5  
     networks:
       - app-network
 
@@ -44,6 +49,11 @@ services:
     ports:
       - "6379:6379"
     restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app-network
 
@@ -56,13 +66,120 @@ services:
       - ./authorization/.env
     volumes:
       - ./authorization/.env:/app/.env
+    depends_on:
+      auth-service-redis:
+        condition: service_healthy
+      auth-service-postgres:
+        condition: service_healthy
     networks:
       - app-network
+
+  review-service-postgres:
+    image: postgres:15
+    env_file:
+      - ./review/.env
+    volumes:
+      - postgres_data1:/var/lib/postgresql/data
+      - ./review/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5433:5432"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5  
+    networks:
+     - app-network
+  
+  review-service-redis:
+    image: redis:7
+    env_file:
+       - ./review/.env
+    command: redis-server --requirepass 1234
+    volumes:
+      - redis_data1:/data
+    ports:
+      - "6380:6379"
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+     - app-network
+  
+  review-server:
+    container_name: review-server
+    build:
+      context: ./review
+      dockerfile: Dockerfile
+    env_file:
+      - ./review/.env
+    volumes:
+      - ./review/.env:/app/.env
+    depends_on:
+      kafka:
+        condition: service_healthy
+      review-service-redis:
+        condition: service_healthy
+      review-service-postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+    networks:
+     - app-network
+    
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+    - "9092:9092"
+    - "29092:29092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    depends_on:
+      - zookeeper
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+     - app-network
+  
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8087:8087"
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "local"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
+      DYNAMIC_CONFIG_ENABLED: "true"
+    networks:
+     - app-network
+
 
 volumes:
   postgres_data:
   redis_data:
-
+  postgres_data1:
+  redis_data1:
 
 networks:
   app-network:

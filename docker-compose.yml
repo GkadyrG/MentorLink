@@ -144,6 +144,60 @@ services:
     networks:
       - app-network
 
+  mentor-service-postgres:
+    image: postgres:15
+    env_file:
+      - ./mentor/.env
+    volumes:
+      - postgres_data2:/var/lib/postgresql/data
+      - ./mentor/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5435:5432"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5  
+    networks:
+     - app-network
+  
+  mentor-service-redis:
+    image: redis:7
+    env_file:
+       - ./mentor/.env
+    command: redis-server --requirepass 12345
+    volumes:
+      - redis_data2:/data
+    ports:
+      - "6381:6379"
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+     - app-network
+  
+  mentor-server:
+    container_name: mentor-server
+    build:
+      context: ./mentor
+      dockerfile: Dockerfile
+    env_file:
+      - ./mentor/.env
+    volumes:
+      - ./mentor/.env:/app/.env
+    depends_on:
+      mentor-service-redis:
+        condition: service_healthy
+      mentor-service-postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+
+
   zookeeper:
     image: wurstmeister/zookeeper
     ports:
@@ -195,6 +249,8 @@ volumes:
   redis_data:
   postgres_data1:
   redis_data1:
+  postgres_data2:
+  redis_data2:
 
 networks:
   app-network:

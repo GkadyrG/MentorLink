@@ -61,7 +61,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := grpcclient.NewMentorClient(fmt.Sprintf("localhost:%s", cfg.MentorServiceAddress))
+	client, err := grpcclient.NewMentorClient(fmt.Sprintf("mentor-server:%s", cfg.MentorServiceAddress))
 	if err != nil {
 		log.Error("error with new grpc client", sl.Err(err))
 		os.Exit(1)

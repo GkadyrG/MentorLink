@@ -44,9 +44,9 @@ func NewRouter(cfg *config.Config) http.Handler {
 	reviewService := cfg.Review
 	router.Route("/review", func(r chi.Router) {
 		r.Post("/create", newProxy(reviewService))
-		r.Post("/update", newProxy(reviewService))
-		r.Post("/delete/{id}", newProxy(reviewService))
-		r.Post("/get", newProxy(reviewService))
+		r.Put("/update", newProxy(reviewService))
+		r.Delete("/delete/{id}", newProxy(reviewService))
+		r.Get("/get", newProxy(reviewService))
 	})
 
 	mentorService := cfg.Mentor

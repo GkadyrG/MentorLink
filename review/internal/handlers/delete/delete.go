@@ -48,16 +48,16 @@ func Delete(log *slog.Logger, delreview DelReview, kafkaProducer KafkaProducer) 
 			return
 		}
 
-		if err := delreview.DeleteReview(claims.UserID, id); err != nil {
-			log.Error("failed to delete review", sl.Err(err))
+		rev, err := delreview.GetReviewByID(id)
+		if err != nil {
+			log.Error("failed to get review by id", sl.Err(err))
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error("server error"))
 			return
 		}
 
-		rev, err := delreview.GetReviewByID(id)
-		if err != nil {
-			log.Error("failed to get review by id", sl.Err(err))
+		if err := delreview.DeleteReview(claims.UserID, id); err != nil {
+			log.Error("failed to delete review", sl.Err(err))
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error("server error"))
 			return

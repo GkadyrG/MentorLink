@@ -18,7 +18,7 @@ type MentorClient struct {
 func NewMentorClient(addr string) (*MentorClient, error) {
 	creds := insecure.NewCredentials()
 
-	conn, err := grpc.NewClient(fmt.Sprintf("localhost:%s", addr), grpc.WithTransportCredentials(creds))
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial mentor service: %w", err)
 	}

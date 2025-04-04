@@ -129,6 +129,21 @@ services:
     networks:
       - app-network
 
+  rating-server:
+    container_name: rating-server
+    build:
+      context: ./rating
+      dockerfile: Dockerfile
+    env_file:
+      - ./rating/.env
+    volumes:
+      - ./rating/.env:/app/.env
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - app-network
+
   zookeeper:
     image: wurstmeister/zookeeper
     ports:

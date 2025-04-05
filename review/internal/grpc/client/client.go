@@ -3,7 +3,7 @@ package grpcclient
 import (
 	"context"
 	"fmt"
-	pb "mentorlink/pkg/api/proto"
+	pb "review/pkg/api/proto"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -34,20 +34,19 @@ func (m *MentorClient) Close() error {
 	return m.conn.Close()
 }
 
-func (m *MentorClient) NewMentor(ctx context.Context, mentorEmail, contact string) error {
-	req := &pb.MentorRequest{
+func (m *MentorClient) CheckMentor(ctx context.Context, mentorEmail string) (bool, error) {
+	req := &pb.CheckRequest{
 		MentorEmail: mentorEmail,
-		Contact:     contact,
 	}
 
-	resp, err := m.client.NewMentor(ctx, req)
+	resp, err := m.client.CheckMentor(ctx, req)
 	if err != nil {
-		return fmt.Errorf("NewMentor RPC call failed: %w", err)
+		return false, fmt.Errorf("CheckMentor RPC call failed: %w", err)
 	}
 
 	if !resp.Success {
-		return fmt.Errorf("server resonded with success=false, message=%s", resp.Message)
+		return false, fmt.Errorf("server responded with failure: %s", resp.Message)
 	}
 
-	return nil
+	return resp.Exists, nil
 }

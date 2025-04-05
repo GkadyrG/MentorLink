@@ -17,6 +17,7 @@ type PostgresRepository interface {
 	UpdateMentor(ctx context.Context, mentor *requests.RatingRequest) error
 	DeleteReviewByMentor(ctx context.Context, mentor *requests.RatingRequest) error
 	CreateMentor(ctx context.Context, mentor *requests.MentorRequest) error
+	MentorExists(ctx context.Context, mentorEmail string) (bool, error)
 }
 
 type MentorService struct {
@@ -113,12 +114,45 @@ func (s *MentorService) NewMentor(ctx context.Context, req *client.MentorRequest
 				Success: false,
 				Message: "error",
 			},
-			fmt.Errorf("failed to create mentor %w", err)
+			fmt.Errorf("failed to create mentor: %w", err)
 	}
 
 	s.log.Info("mentor successfully created", "mentor_email", req.MentorEmail)
 	return &client.Response{
 		Success: true,
 		Message: "ok",
+	}, nil
+}
+
+func (s *MentorService) CheckMentor(ctx context.Context, req *client.CheckRequest) (*client.CheckResponse, error) {
+	mentorEmail := req.MentorEmail
+
+	s.log.Debug("checking mentor existence", "mentor_email", mentorEmail)
+
+	exists, err := s.repo.MentorExists(ctx, mentorEmail)
+	if err != nil {
+		s.log.Error("failed to check mentor existence", "error", err, "mentor_email", mentorEmail)
+
+		return &client.CheckResponse{
+			Success: false,
+			Exists:  false,
+			Message: "error",
+		}, fmt.Errorf("failed to check mentor: %w", err)
+	}
+
+	if exists {
+		s.log.Info("mentor exists", "mentor_email", mentorEmail)
+		return &client.CheckResponse{
+			Success: true,
+			Exists:  true,
+			Message: "exists",
+		}, nil
+	}
+
+	s.log.Info("mentor does not exist", "mentor_email", mentorEmail)
+	return &client.CheckResponse{
+		Success: true,
+		Exists:  false,
+		Message: "not exists",
 	}, nil
 }

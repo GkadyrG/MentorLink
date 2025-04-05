@@ -69,9 +69,18 @@ func (s *Storage) UpdateReview(review *model.Review) error {
 	query := `UPDATE reviews
 			  SET mentor_email=$1, rating=$2, comment=$3, user_contact=$4
 			  WHERE id=$5 and user_id=$6;`
-	_, err := s.db.Exec(query, review.MentorEmail, review.Rating, review.Comment, review.UserContact, review.ID, review.UserID)
+	result, err := s.db.Exec(query, review.MentorEmail, review.Rating, review.Comment, review.UserContact, review.ID, review.UserID)
 	if err != nil {
 		return fmt.Errorf("%s, %w", op, err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("%s: failed to check rows affected: %w", op, err)
+	}
+
+	if rows == 0 {
+		return fmt.Errorf("%s: no review found with id=%d and user_id=%d", op, review.ID, review.UserID)
 	}
 	return nil
 }

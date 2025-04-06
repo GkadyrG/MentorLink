@@ -87,3 +87,14 @@ func (s *Storage) DeleteReviewByMentor(ctx context.Context, mentor *requests.Rat
 
 	return nil
 }
+
+func (s *Storage) MentorExists(ctx context.Context, mentorEmail string) (bool, error) {
+	const op = "storage.db.postgres.CheckMentorByEmail"
+	query := `SELECT EXISTS(SELECT 1 FROM mentors WHERE mentor_email=$1)`
+	var exists bool
+	err := s.db.GetContext(ctx, &exists, query, mentorEmail)
+	if err != nil {
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+	return exists, nil
+}

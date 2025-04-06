@@ -1,6 +1,7 @@
 package create
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"review/internal/domain/model"
@@ -24,7 +25,11 @@ type KafkaProducer interface {
 	SendReviewEvent(review *model.ReviewEvent) error
 }
 
-func Create(log *slog.Logger, reviewCreater ReviewCreater, kafkaProducer KafkaProducer) http.HandlerFunc {
+type CheckMentor interface {
+	CheckMentor(ctx context.Context, mentorEmail string) (bool, error)
+}
+
+func Create(ctx context.Context, log *slog.Logger, reviewCreater ReviewCreater, kafkaProducer KafkaProducer, checkMentor CheckMentor) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.create.Create"
 		log := log.With(
@@ -52,7 +57,22 @@ func Create(log *slog.Logger, reviewCreater ReviewCreater, kafkaProducer KafkaPr
 			return
 		}
 
-		exist, err := reviewCreater.IfExist(req.UserID, req.MentorEmail)
+		existsMentor, err := checkMentor.CheckMentor(ctx, req.MentorEmail)
+		if err != nil {
+			log.Error("failed to check mentor in mentor-service", sl.Err(err))
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, response.Error("server error"))
+			return
+		}
+
+		if !existsMentor {
+			log.Error("mentor doesn't exists", "mentor_email", req.MentorEmail)
+			render.Status(r, http.StatusNotFound)
+			render.JSON(w, r, response.Error("mentor doesn't exists"))
+			return
+		}
+
+		existsReview, err := reviewCreater.IfExist(req.UserID, req.MentorEmail)
 		if err != nil {
 			log.Error("falied to find review", sl.Err(err))
 			render.Status(r, http.StatusInternalServerError)
@@ -60,7 +80,7 @@ func Create(log *slog.Logger, reviewCreater ReviewCreater, kafkaProducer KafkaPr
 			return
 		}
 
-		if exist {
+		if existsReview {
 			log.Warn("review already exist")
 			render.Status(r, http.StatusConflict)
 			render.JSON(w, r, map[string]any{

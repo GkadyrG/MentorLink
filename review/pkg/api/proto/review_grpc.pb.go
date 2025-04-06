@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v5.28.3
-// source: proto/mentor.proto
+// source: proto/review.proto
 
 package api
 
@@ -193,5 +193,5 @@ var MentorService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/mentor.proto",
+	Metadata: "proto/review.proto",
 }

@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"review/internal/config"
+	grpcclient "review/internal/grpc/client"
 	"review/internal/handlers/create"
 	del "review/internal/handlers/delete"
 	"review/internal/handlers/get"
@@ -32,6 +34,8 @@ const (
 )
 
 func main() {
+
+	ctx := context.Background()
 
 	cfg := config.LoadConfig()
 
@@ -71,6 +75,21 @@ func main() {
 		log.Error("error created a new token manager", sl.Err(err))
 		os.Exit(1)
 	}
+
+	client, err := grpcclient.NewMentorClient(fmt.Sprintf("mentor-server:%s", cfg.MentorServiceAddress))
+	if err != nil {
+		log.Error("error with new grpc client", sl.Err(err))
+		os.Exit(1)
+	}
+
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Error("failed to close gRPC client", sl.Err(err))
+		} else {
+			log.Debug("gRPC client closed successfully")
+		}
+	}()
+
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
@@ -79,7 +98,7 @@ func main() {
 
 	router.Group(func(r chi.Router) {
 		r.Use(mwAuth.AuthMiddleware(tokenMn, log))
-		r.Post("/review/create", create.Create(log, storage, kafkaProducer))
+		r.Post("/review/create", create.Create(ctx, log, storage, kafkaProducer, client))
 		r.Put("/review/update", update.Update(log, storage, kafkaProducer))
 		r.Delete("/review/delete/{id}", del.Delete(log, storage, kafkaProducer))
 
@@ -110,7 +129,7 @@ func main() {
 	<-done
 	log.Info("stopping server")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {

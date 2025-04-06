@@ -16,6 +16,7 @@ import (
 
 type ReviewUpdate interface {
 	UpdateReview(review *model.Review) error
+	GetReviewByID(id int64) (*model.Review, error)
 }
 
 type KafkaProducer interface {
@@ -54,6 +55,25 @@ func Update(log *slog.Logger, reviewUpdate ReviewUpdate, kafkaProducer KafkaProd
 			return
 		}
 
+		rev, err := reviewUpdate.GetReviewByID(req.ID)
+		if err != nil {
+			log.Error("failed to get review by id", sl.Err(err))
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, response.Error("server error"))
+			return
+		}
+
+		event := &model.ReviewEvent{
+			Action: "deleted",
+			ID:     rev.ID,
+			Email:  rev.MentorEmail,
+			Score:  rev.Rating,
+		}
+
+		if err := kafkaProducer.SendReviewEvent(event); err != nil {
+			log.Error("failed to send kafka event", sl.Err(err))
+		}
+
 		if err := reviewUpdate.UpdateReview(&req); err != nil {
 			log.Error("failed to update review", sl.Err(err))
 			render.Status(r, http.StatusInternalServerError)
@@ -61,7 +81,7 @@ func Update(log *slog.Logger, reviewUpdate ReviewUpdate, kafkaProducer KafkaProd
 			return
 		}
 
-		event := &model.ReviewEvent{
+		event = &model.ReviewEvent{
 			Action: "updated",
 			ID:     req.ID,
 			Email:  req.MentorEmail,

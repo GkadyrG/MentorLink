@@ -23,6 +23,7 @@ type PostgresRepository interface {
 	DeleteReviewByMentor(ctx context.Context, mentor *requests.RatingRequest) error
 	CreateMentor(ctx context.Context, mentor *requests.MentorRequest) error
 	Get(ctx context.Context) ([]models.MentorTable, error)
+	MentorExists(ctx context.Context, mentorEmail string) (bool, error)
 }
 
 type RedisRepository interface {

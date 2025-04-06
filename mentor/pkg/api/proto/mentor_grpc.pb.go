@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	MentorService_MethodMentorRating_FullMethodName = "/mentor.MentorService/MethodMentorRating"
 	MentorService_NewMentor_FullMethodName          = "/mentor.MentorService/NewMentor"
+	MentorService_CheckMentor_FullMethodName        = "/mentor.MentorService/CheckMentor"
 )
 
 // MentorServiceClient is the client API for MentorService service.
@@ -29,6 +30,7 @@ const (
 type MentorServiceClient interface {
 	MethodMentorRating(ctx context.Context, in *RatingRequest, opts ...grpc.CallOption) (*Response, error)
 	NewMentor(ctx context.Context, in *MentorRequest, opts ...grpc.CallOption) (*Response, error)
+	CheckMentor(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error)
 }
 
 type mentorServiceClient struct {
@@ -59,12 +61,23 @@ func (c *mentorServiceClient) NewMentor(ctx context.Context, in *MentorRequest, 
 	return out, nil
 }
 
+func (c *mentorServiceClient) CheckMentor(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CheckResponse)
+	err := c.cc.Invoke(ctx, MentorService_CheckMentor_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MentorServiceServer is the server API for MentorService service.
 // All implementations must embed UnimplementedMentorServiceServer
 // for forward compatibility.
 type MentorServiceServer interface {
 	MethodMentorRating(context.Context, *RatingRequest) (*Response, error)
 	NewMentor(context.Context, *MentorRequest) (*Response, error)
+	CheckMentor(context.Context, *CheckRequest) (*CheckResponse, error)
 	mustEmbedUnimplementedMentorServiceServer()
 }
 
@@ -80,6 +93,9 @@ func (UnimplementedMentorServiceServer) MethodMentorRating(context.Context, *Rat
 }
 func (UnimplementedMentorServiceServer) NewMentor(context.Context, *MentorRequest) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NewMentor not implemented")
+}
+func (UnimplementedMentorServiceServer) CheckMentor(context.Context, *CheckRequest) (*CheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckMentor not implemented")
 }
 func (UnimplementedMentorServiceServer) mustEmbedUnimplementedMentorServiceServer() {}
 func (UnimplementedMentorServiceServer) testEmbeddedByValue()                       {}
@@ -138,6 +154,24 @@ func _MentorService_NewMentor_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MentorService_CheckMentor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MentorServiceServer).CheckMentor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MentorService_CheckMentor_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MentorServiceServer).CheckMentor(ctx, req.(*CheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MentorService_ServiceDesc is the grpc.ServiceDesc for MentorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +186,10 @@ var MentorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "NewMentor",
 			Handler:    _MentorService_NewMentor_Handler,
+		},
+		{
+			MethodName: "CheckMentor",
+			Handler:    _MentorService_CheckMentor_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -1,13 +1,13 @@
 syntax = "proto3";
 
-option go_package = "rating/pkg/api";
+option go_package = "review/pkg/api";
 
 package mentor;
 
 service MentorService {
     rpc MethodMentorRating(RatingRequest) returns (Response);
     rpc NewMentor(MentorRequest) returns (Response);
-    rpc CheckMentor(CheckRequest) returns (Response);
+    rpc CheckMentor(CheckRequest) returns (CheckResponse);
 }
 
 message RatingRequest {
@@ -25,9 +25,13 @@ message CheckRequest {
     string mentor_email = 1;
 }
 
+message CheckResponse {
+    bool success = 1;
+    bool exists = 2;
+    string message = 3;
+}
+
 message Response {
     bool success = 1;
     string message = 2;
 }
-
-

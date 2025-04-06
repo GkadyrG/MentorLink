@@ -32,7 +32,7 @@ services:
       - "5432:5432"
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d mentors"]
       interval: 10s
       timeout: 5s
       retries: 5  
@@ -85,7 +85,7 @@ services:
       - "5433:5432"
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U admin1 -d reviews"]
       interval: 10s
       timeout: 5s
       retries: 5  
@@ -155,7 +155,7 @@ services:
       - "5435:5432"
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U admin3 -d mentorss"]
       interval: 10s
       timeout: 5s
       retries: 5  
@@ -242,6 +242,38 @@ services:
       DYNAMIC_CONFIG_ENABLED: "true"
     networks:
      - app-network
+
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - app-network
+
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: promtail
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./monitoring/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    networks:
+      - app-network
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    depends_on:
+      - loki
 
 
 volumes:

@@ -2,7 +2,9 @@ package routes
 
 import (
 	"api-gateway/internal/config"
+	mwLogger "api-gateway/internal/middleware/logger"
 	"log"
+	"log/slog"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -26,11 +28,11 @@ func newProxy(target string) http.HandlerFunc {
 	return proxy.ServeHTTP
 }
 
-func NewRouter(cfg *config.Config) http.Handler {
+func NewRouter(log *slog.Logger, cfg *config.Config) http.Handler {
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
-	router.Use(middleware.Logger)
+	router.Use(mwLogger.New(log))
 	router.Use(middleware.Recoverer)
 
 	auth := cfg.Auth

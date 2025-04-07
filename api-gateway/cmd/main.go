@@ -34,7 +34,7 @@ func main() {
 
 	log.Debug("debug messages are enabled")
 
-	router := routes.NewRouter(cfg)
+	router := routes.NewRouter(log, cfg)
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)

@@ -30,7 +30,7 @@
 > Запуск — миграции, сервисы и логгирование.
 
 ```bash
-# 1. Клонируем репу
+# 1. Клонируем репозиторий
 git clone https://github.com/GkadyrG/MentorLink.git
 cd MentorLink
 

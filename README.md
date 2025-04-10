@@ -12,7 +12,7 @@
 - **Redis** — быстрая память
 - **Docker / Docker Compose** — всё в контейнерах
 - **gRPC** — общение между сервисами
-- **Promtail + Loki + Grafana** — логгирование без боли
+- **Promtail + Loki + Grafana** — логгирование
 - **nginx** — API Gateway
 
 ---

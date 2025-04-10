@@ -21,7 +21,7 @@
 
 > Схема текущей архитектуры проекта:
 
-![architecture](./monitoring/architecture.png)
+![architecture](./monitoring/architecture.jpeg)
 
 ---
 

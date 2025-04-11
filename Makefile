@@ -28,6 +28,6 @@ migrate-mentor-down:
 		-database "postgres://admin3:12345@localhost:5435/mentorss?sslmode=disable" down
 
 ## ALL
-migrate-up: migrate-auth-up migrate-review-up migrate-mentor-up
+migrate-up-all: migrate-auth-up migrate-review-up migrate-mentor-up
 
-migrate-down: migrate-auth-down migrate-review-down migrate-mentor-down
+migrate-down-all: migrate-auth-down migrate-review-down migrate-mentor-down

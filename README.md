@@ -34,8 +34,8 @@
 git clone https://github.com/GkadyrG/MentorLink.git
 cd MentorLink
 
-# 2. Применяем миграции (внутри хоста)
-make migrate-up-all
-
-# 3. Запускаем всё, пересобирая образы
+# 2. Запускаем всё, пересобирая образы
 docker compose up -d --build
+
+# 3. Применяем миграции (внутри хоста)
+make migrate-up-all
